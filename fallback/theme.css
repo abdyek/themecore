@@ -1,0 +1,124 @@
+/*
+ * Umono's fallback theme: the default look of pages without an active theme.
+ * It is Umono v0.8's default look, adapted to the theme system: no assets,
+ * generic font families only, and the root styled with :scope.
+ */
+
+:scope {
+  background-color: #F4F1EA;
+  color: #2D2A26;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 18px;
+  line-height: 1.8;
+  padding: 2.5rem;
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+  font-optical-sizing: auto;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: #1A1816;
+  font-weight: 800;
+  line-height: 1.2;
+  margin-top: 2em;
+  margin-bottom: 0.8em;
+  letter-spacing: -0.03em;
+}
+
+h1 {
+  font-size: 2.6rem;
+  padding-bottom: 0.3em;
+}
+
+h2 { font-size: 2rem; }
+h3 { font-size: 1.5rem; }
+
+p {
+  margin-bottom: 1.6em;
+  opacity: 0.95;
+}
+
+a {
+  color: #5D55FA;
+  text-decoration: none;
+  font-weight: 600;
+  padding: 4px 8px;
+  margin: 0 -2px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  border-bottom: 1px solid rgba(93, 85, 250, 0.2);
+}
+
+a:hover {
+  color: #4338ca;
+  background-color: #FEFDFB;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+}
+
+blockquote {
+  font-style: italic;
+  color: #5C5852;
+  background: #FAF9F6;
+  border-left: 4px solid #D6D0C2;
+  margin: 2.5em 0;
+  padding: 1.5em 2em;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+
+code {
+  font-family: monospace;
+  font-size: 0.85em;
+  background-color: #EAE6DA;
+  color: #A32A2A;
+  padding: 0.25em 0.5em;
+  border-radius: 4px;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+pre {
+  background-color: #1E1C1A;
+  color: #EDEAE4;
+  padding: 1.5em;
+  border-radius: 8px;
+  overflow-x: auto;
+  max-width: 100%;
+  box-sizing: border-box;
+  margin: 2.5em 0;
+  border: 1px solid #2D2A26;
+}
+
+pre code {
+  background-color: transparent;
+  color: inherit;
+  padding: 0;
+  white-space: pre;
+}
+
+picture {
+  display: block;
+  max-width: 100%;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+  width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 2.5em 0;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
+}
+
+hr {
+  border: 0;
+  height: 1px;
+  background: #E2DED0;
+  margin: 4em 0;
+}
+
+::selection {
+  background: #FDE68A;
+  color: #1A1816;
+}

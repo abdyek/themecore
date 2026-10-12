@@ -139,6 +139,8 @@ The author grammar is closed:
 - **URLs** are relative paths to allowed files under `assets/`, e.g. `url(fonts/inter.woff2)`.
 - **Generated text:** `content`, `quotes`, `list-style-type` and `list-style` cannot generate words. `content` with a string or an image needs alternative text: `content: "→" / "";`.
 
+`FallbackSource` returns the fallback theme, the default look of pages without an active theme, in the author grammar; `FallbackCSS` returns its canonical CSS. `FallbackSource` is also the starting `assets/theme.css` of a new theme.
+
 ## Theme API
 
 The capability ledger (`Features` and `Breaks`) is the single source of the Theme API versions. Rows are only appended.
