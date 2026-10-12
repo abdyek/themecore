@@ -31,12 +31,13 @@ type cssRule struct {
 // "!important". important is true when the declaration carried an
 // "!important" marker. rawName is the property name token as written,
 // escapes included; the serializer writes it so that the canonical CSS has
-// the same tokens.
+// the same tokens. line is the line of the property name token.
 type cssDecl struct {
 	name      string
 	value     []cssToken
 	important bool
 	rawName   []byte
+	line      int
 }
 
 // ruleListAtRules is the set of at-rule names whose block holds a rule
@@ -138,7 +139,7 @@ func trimSpace(toks []cssToken) []cssToken {
 // property) and ASCII lower-cased otherwise. A non-custom property with an
 // empty value triggers "empty value"; a custom property may be empty.
 func parseDecl(toks []cssToken) (cssDecl, error) {
-	if toks[0].tt != css.IdentToken && toks[0].tt != css.CustomPropertyNameToken {
+	if toks[0].tt != css.IdentToken {
 		return cssDecl{}, fmt.Errorf("theme.css:%d: expected a property name", toks[0].line)
 	}
 	name := cssUnescape(toks[0].data)
@@ -181,6 +182,7 @@ func parseDecl(toks []cssToken) (cssDecl, error) {
 		value:     value,
 		important: important,
 		rawName:   toks[0].data,
+		line:      toks[0].line,
 	}, nil
 }
 
