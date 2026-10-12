@@ -65,6 +65,22 @@ m, err := themecore.ParseManifest(b)
 
 Optional keys are `nil` in `Manifest` when they are absent.
 
+## `built.toml`
+
+`ParseBuilt` parses and validates `built.toml`, the manifest of a package. It has the keys of `theme.toml`, with the same rules, under the schema `https://umono.dev/schemas/theme-built/v1`, and two more:
+
+| Key | Required | Rule |
+| --- | --- | --- |
+| `theme-api-version` | Yes | An integer, 1 or greater |
+| `built-at` | Yes | An offset date-time in UTC, e.g. `2026-06-02T00:00:00Z` |
+
+`CheckInstallDir` checks that the install path `themes/{org}/{id}/{version}` matches `id` and `version`:
+
+```go
+b, err := themecore.ParseBuilt(data)
+err = b.CheckInstallDir("themes/acme/minimal/0.1.0")
+```
+
 ## License
 
 MIT
