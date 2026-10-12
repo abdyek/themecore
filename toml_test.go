@@ -78,3 +78,73 @@ func TestDecodeTOMLRejectsInvalidUTF8(t *testing.T) {
 		t.Fatalf("expected error, got nil")
 	}
 }
+
+func TestDecodeTOMLRejectsEscapeE(t *testing.T) {
+	cases := []struct {
+		name string
+		doc  string
+	}{
+		{
+			name: "multiline basic string",
+			doc:  `a = """` + "\n" + `x\ey` + "\n" + `"""` + "\n",
+		},
+		{
+			name: "quoted key",
+			doc:  `"a\eb" = 1` + "\n",
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			var got map[string]any
+			if err := decodeTOML([]byte(tc.doc), &got); err == nil {
+				t.Fatalf("expected error, got nil")
+			}
+		})
+	}
+}
+
+func TestDecodeTOMLAcceptsBackslashE(t *testing.T) {
+	const backslash = "\\"
+	cases := []struct {
+		name string
+		doc  string
+		want map[string]any
+	}{
+		{
+			name: "literal string",
+			doc:  `a = 'C:\e'` + "\n",
+			want: map[string]any{"a": `C:\e`},
+		},
+		{
+			name: "multiline literal string",
+			doc:  `a = '''C:\e'''` + "\n",
+			want: map[string]any{"a": `C:\e`},
+		},
+		{
+			name: "escaped backslash",
+			doc:  "a = \"" + backslash + backslash + "e\"\n",
+			want: map[string]any{"a": `\e`},
+		},
+		{
+			name: "escaped quote and backslash",
+			doc:  "a = \"" + backslash + "\"" + backslash + backslash + "e\"\n",
+			want: map[string]any{"a": `"\e`},
+		},
+		{
+			name: "comment",
+			doc:  `a = 1 # \e` + "\n",
+			want: map[string]any{"a": int64(1)},
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			var got map[string]any
+			if err := decodeTOML([]byte(tc.doc), &got); err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if !reflect.DeepEqual(got, tc.want) {
+				t.Errorf("got %#v, want %#v", got, tc.want)
+			}
+		})
+	}
+}
