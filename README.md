@@ -55,6 +55,17 @@ The package root holds only `built.toml`, `contract.toml`, `checksums.json`, `at
 | `.avif` | An ISO BMFF `ftyp` box with the brand `avif` or `avis` |
 | `.gif` | `GIF87a` or `GIF89a` |
 
+## `checksums.json`
+
+`Checksums` returns the content of `checksums.json` during build; `VerifyChecksums` checks a package against it during install and activation:
+
+```go
+b, err := themecore.Checksums(p) // p without checksums.json
+err = themecore.VerifyChecksums(p)
+```
+
+The algorithm is `sha256`, and `files` lists every package file except `checksums.json` itself, with no other entries. `Checksums` is deterministic: keys in byte order and a fixed format. `VerifyChecksums` looks at values, not format.
+
 ## `theme.toml`
 
 `ParseManifest` parses and validates `theme.toml`, the manifest the theme author writes:
