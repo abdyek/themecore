@@ -5,6 +5,19 @@ import (
 	"strings"
 )
 
+// decodeAddresses decodes the address table of attributes.toml for the
+// detectors. It does not validate the file.
+func decodeAddresses(b []byte) (map[string]map[string]string, error) {
+	var v struct {
+		Schema  string                       `toml:"schema"`
+		Address map[string]map[string]string `toml:"address"`
+	}
+	if err := decodeTOML(b, &v); err != nil {
+		return nil, err
+	}
+	return v.Address, nil
+}
+
 // attributeAddresses returns the address map of attributes.toml of p, or nil
 // if the file is absent or cannot be decoded. Detectors run on validated
 // packages; a file that does not decode shows no feature.
@@ -13,14 +26,11 @@ func attributeAddresses(p Package) map[string]map[string]string {
 	if !ok {
 		return nil
 	}
-	var v struct {
-		Schema  string                       `toml:"schema"`
-		Address map[string]map[string]string `toml:"address"`
-	}
-	if err := decodeTOML(b, &v); err != nil {
+	addresses, err := decodeAddresses(b)
+	if err != nil {
 		return nil
 	}
-	return v.Address
+	return addresses
 }
 
 // detectAddress returns a detector that scans the addresses of p in sorted
