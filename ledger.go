@@ -42,6 +42,11 @@ var Features = []Feature{
 	{ID: "assets.webp", IntroducedIn: 1, Detect: detectAsset(".webp")},
 	{ID: "assets.avif", IntroducedIn: 1, Detect: detectAsset(".avif")},
 	{ID: "assets.gif", IntroducedIn: 1, Detect: detectAsset(".gif")},
+	{ID: "css.at.media", IntroducedIn: 1, Detect: detectAtRule("media")},
+	{ID: "css.at.supports", IntroducedIn: 1, Detect: detectAtRule("supports")},
+	{ID: "css.at.layer", IntroducedIn: 1, Detect: detectAtRule("layer")},
+	{ID: "css.at.font-face", IntroducedIn: 1, Detect: detectAtRule("font-face")},
+	{ID: "css.at.keyframes", IntroducedIn: 1, Detect: detectAtRule("keyframes")},
 }
 
 // Breaks are the break rows of the ledger.

@@ -1,6 +1,7 @@
 package themecore
 
 import (
+	"fmt"
 	"sort"
 	"strings"
 )
@@ -113,4 +114,41 @@ func layoutBuiltinAddress(address string, _ map[string]string) bool {
 // layoutComponentBuiltinAddress reports whether address has three parts.
 func layoutComponentBuiltinAddress(address string, _ map[string]string) bool {
 	return addressParts(address) == 3
+}
+
+// findAtRuleLine walks rules and their children depth-first in source order
+// (an at-rule before its children) and returns the line of the first rule
+// whose at equals name.
+func findAtRuleLine(rules []cssRule, name string) (int, bool) {
+	for _, r := range rules {
+		if r.at == name {
+			return r.line, true
+		}
+		if len(r.rules) > 0 {
+			if line, found := findAtRuleLine(r.rules, name); found {
+				return line, true
+			}
+		}
+	}
+	return 0, false
+}
+
+// detectAtRule returns a detector for an at-rule in the package's canonical
+// assets/theme.css. Detectors look at the canonical CSS, not the author's
+// source. where is the file and the line of the first such at-rule.
+func detectAtRule(name string) DetectorFunc {
+	return func(p Package) (string, bool) {
+		b, ok := p.Files[themeCSS]
+		if !ok {
+			return "", false
+		}
+		rules, err := parseCSS(b)
+		if err != nil {
+			return "", false
+		}
+		if line, found := findAtRuleLine(rules, name); found {
+			return fmt.Sprintf("%s:%d", themeCSS, line), true
+		}
+		return "", false
+	}
 }
