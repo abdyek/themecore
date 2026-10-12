@@ -11,6 +11,9 @@ import (
 // checked; the selector inside selector() is subject to the selector rules
 // and the dictionary.
 func checkSupports(toks []cssToken, line int) error {
+	if err := checkValueURLs(toks, line); err != nil {
+		return err
+	}
 	ts := trimSpace(toks)
 	if len(ts) == 0 {
 		return fmt.Errorf("theme.css:%d: invalid @supports condition", line)

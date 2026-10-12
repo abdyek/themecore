@@ -217,6 +217,12 @@ func checkDecl(d cssDecl, ctx declContext) error {
 			}
 		}
 	}
+	if err := checkValueURLs(d.value, d.line); err != nil {
+		return err
+	}
+	if err := checkGeneratedText(d); err != nil {
+		return err
+	}
 	if ctx == declFontFace && d.name == "font-family" {
 		for _, t := range d.value {
 			if t.tt == css.StringToken {

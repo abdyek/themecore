@@ -118,6 +118,27 @@ err = b.CheckInstallDir("themes/acme/minimal/0.1.0")
 
 Sources are the only multi-line text fields.
 
+## Theme CSS
+
+`Transform` turns the theme author's `assets/theme.css` into the canonical CSS that goes into the package; `Verify` checks the canonical CSS of a package:
+
+```go
+out, err := themecore.Transform(src) // build
+err = themecore.Verify(css)          // install and activation
+```
+
+Every style rule of the canonical CSS is inside an `@scope (umono-root)` block, so the theme cannot style anything outside `<umono-root>`. `Transform` parses strictly and never relies on the browser's error recovery; its output always passes `Verify`. `Verify` checks the grammar, not the bytes.
+
+The author grammar is closed:
+
+- **At-rules:** style rules, `@media`, `@supports` and `@layer` blocks; `@layer` statements, `@font-face` and `@keyframes` at the top level only. Every other at-rule, `@import` and `@scope` included, is rejected. No nested CSS.
+- **Selectors:** a closed list of pseudo-classes and pseudo-elements. `html`, `body`, `umono-root`, `:root`, `&`, `id` (`#id`, `[id]`, `:target`) and namespace prefixes are rejected. `<umono-root>` itself is styled with `:scope` in the first compound selector, e.g. `:scope.layout-post h1`.
+- **`@media`:** the media types `all`, `screen`, `print` and a closed list of media features.
+- **Values:** a closed list of value functions (`env()`, `if()`, `sibling-index()` and others are rejected); `attr()` cannot read `id`; `behavior` and `-moz-binding` are rejected.
+- **Reserved names:** `umono-` and `compono-` (and `--umono-`, `--compono-`) are reserved for Umono.
+- **URLs** are relative paths to allowed files under `assets/`, e.g. `url(fonts/inter.woff2)`.
+- **Generated text:** `content`, `quotes`, `list-style-type` and `list-style` cannot generate words. `content` with a string or an image needs alternative text: `content: "→" / "";`.
+
 ## Theme API
 
 The capability ledger (`Features` and `Breaks`) is the single source of the Theme API versions. Rows are only appended.
