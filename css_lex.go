@@ -223,3 +223,17 @@ func countNewlines(b []byte) int {
 	}
 	return n
 }
+
+// cssHasComment reports whether b contains a CSS comment token.
+func cssHasComment(b []byte) bool {
+	l := css.NewLexer(parse.NewInputBytes(b))
+	for {
+		tt, _ := l.Next()
+		if tt == css.ErrorToken {
+			return false
+		}
+		if tt == css.CommentToken {
+			return true
+		}
+	}
+}

@@ -13,13 +13,15 @@ import (
 // at-rule's prelude. block reports whether the rule was followed by a {}
 // block. rules holds the rule list inside an at-rule block of an at-rule in
 // ruleListAtRules; decls holds the declarations inside a style rule or an
-// at-rule block of an at-rule in declListAtRules.
+// at-rule block of an at-rule in declListAtRules. line is the line of the
+// at-keyword, or of the first prelude token of a style rule.
 type cssRule struct {
 	at      string
 	prelude []cssToken
 	block   bool
 	rules   []cssRule
 	decls   []cssDecl
+	line    int
 }
 
 // cssDecl is a declaration inside a style rule or a declaration-list
@@ -27,11 +29,14 @@ type cssRule struct {
 // property is a custom property starting with "--"). value is the
 // declaration value without leading or trailing whitespace and without
 // "!important". important is true when the declaration carried an
-// "!important" marker.
+// "!important" marker. rawName is the property name token as written,
+// escapes included; the serializer writes it so that the canonical CSS has
+// the same tokens.
 type cssDecl struct {
 	name      string
 	value     []cssToken
 	important bool
+	rawName   []byte
 }
 
 // ruleListAtRules is the set of at-rule names whose block holds a rule
@@ -175,6 +180,7 @@ func parseDecl(toks []cssToken) (cssDecl, error) {
 		name:      name,
 		value:     value,
 		important: important,
+		rawName:   toks[0].data,
 	}, nil
 }
 
@@ -282,7 +288,7 @@ func (p *cssParser) parseAtRule() (cssRule, error) {
 	stopTok := p.toks[p.i]
 	if stopTok.tt == css.SemicolonToken {
 		p.i++
-		return cssRule{at: name, prelude: prelude, block: false}, nil
+		return cssRule{at: name, prelude: prelude, block: false, line: nameTok.line}, nil
 	}
 	braceLine := stopTok.line
 	p.i++
@@ -291,13 +297,13 @@ func (p *cssParser) parseAtRule() (cssRule, error) {
 		if err != nil {
 			return cssRule{}, err
 		}
-		return cssRule{at: name, prelude: prelude, block: true, rules: rules}, nil
+		return cssRule{at: name, prelude: prelude, block: true, rules: rules, line: nameTok.line}, nil
 	}
 	decls, err := p.parseDeclList(braceLine)
 	if err != nil {
 		return cssRule{}, err
 	}
-	return cssRule{at: name, prelude: prelude, block: true, decls: decls}, nil
+	return cssRule{at: name, prelude: prelude, block: true, decls: decls, line: nameTok.line}, nil
 }
 
 // parseStyleRule parses a style rule at the current parser position.
@@ -332,7 +338,7 @@ func (p *cssParser) parseStyleRule() (cssRule, error) {
 	if err != nil {
 		return cssRule{}, err
 	}
-	return cssRule{prelude: prelude, block: true, decls: decls}, nil
+	return cssRule{prelude: prelude, block: true, decls: decls, line: prelude[0].line}, nil
 }
 
 // parseDeclList parses a declaration list at the current parser
