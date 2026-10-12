@@ -49,6 +49,11 @@ func checkRule(r cssRule, canonical bool, ctx cssContext) error {
 		if err := checkSelector(r.prelude, r.line); err != nil {
 			return err
 		}
+		for _, d := range r.decls {
+			if err := checkDecl(d, declStyle); err != nil {
+				return err
+			}
+		}
 		if canonical && ctx != cssContextScope {
 			return fmt.Errorf("theme.css:%d: style rule outside @scope (umono-root)", r.line)
 		}
@@ -88,6 +93,9 @@ func checkRule(r cssRule, canonical bool, ctx cssContext) error {
 		}
 		return checkGrammarIn(r.rules, canonical, cssContextBlock)
 	case "layer":
+		if err := checkLayerNames(r.prelude, r.block, r.line); err != nil {
+			return err
+		}
 		if r.block {
 			return checkGrammarIn(r.rules, canonical, cssContextBlock)
 		}
@@ -113,6 +121,11 @@ func checkRule(r cssRule, canonical bool, ctx cssContext) error {
 				return fmt.Errorf("theme.css:%d: !important is not allowed in @font-face", r.line)
 			}
 		}
+		for _, d := range r.decls {
+			if err := checkDecl(d, declFontFace); err != nil {
+				return err
+			}
+		}
 		return nil
 	case "keyframes":
 		if ctx != cssContextTop {
@@ -124,6 +137,9 @@ func checkRule(r cssRule, canonical bool, ctx cssContext) error {
 		if len(trimSpace(r.prelude)) == 0 {
 			return fmt.Errorf("theme.css:%d: @keyframes must have a name", r.line)
 		}
+		if err := checkKeyframesName(r.prelude, r.line); err != nil {
+			return err
+		}
 		for _, child := range r.rules {
 			if child.at != "" {
 				return fmt.Errorf("theme.css:%d: keyframe selector must be from, to or a percentage", child.line)
@@ -134,6 +150,11 @@ func checkRule(r cssRule, canonical bool, ctx cssContext) error {
 			for _, d := range child.decls {
 				if d.important {
 					return fmt.Errorf("theme.css:%d: !important is not allowed in @keyframes", child.line)
+				}
+			}
+			for _, d := range child.decls {
+				if err := checkDecl(d, declKeyframe); err != nil {
+					return err
 				}
 			}
 		}

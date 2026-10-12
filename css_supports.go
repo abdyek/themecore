@@ -155,7 +155,7 @@ func checkSupportsParensContent(inner []cssToken, line int) error {
 		}
 		return nil
 	}
-	if trimmed[0].tt != css.IdentToken && trimmed[0].tt != css.CustomPropertyNameToken {
+	if trimmed[0].tt != css.IdentToken {
 		return fmt.Errorf("theme.css:%d: invalid @supports condition", line)
 	}
 	i := 1

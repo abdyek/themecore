@@ -139,6 +139,13 @@ func lexCSS(b []byte) ([]cssToken, error) {
 			}
 			break
 		}
+		// CSS Syntax Level 3 has a single ident token; the lexer reports
+		// idents starting with "--" as CustomPropertyNameToken, so we
+		// normalize them to IdentToken and let the parser handle "--" by
+		// inspecting the unescaped value.
+		if tt == css.CustomPropertyNameToken {
+			tt = css.IdentToken
+		}
 		switch tt {
 		case css.BadStringToken:
 			return nil, fmt.Errorf("theme.css:%d: bad string", line)
@@ -182,7 +189,15 @@ func lexCSS(b []byte) ([]cssToken, error) {
 			combined = append(combined, next.data...)
 			l2 := css.NewLexer(parse.NewInputBytes(combined))
 			tt1, d1 := l2.Next()
+			// Same CustomPropertyNameToken-to-IdentToken normalization as
+			// in the main loop, so the comparison with prev.tt below holds.
+			if tt1 == css.CustomPropertyNameToken {
+				tt1 = css.IdentToken
+			}
 			tt2, d2 := l2.Next()
+			if tt2 == css.CustomPropertyNameToken {
+				tt2 = css.IdentToken
+			}
 			tt3, _ := l2.Next()
 			if tt1 == css.ErrorToken || tt2 == css.ErrorToken || tt3 != css.ErrorToken {
 				return nil, fmt.Errorf("theme.css:%d: comment separates tokens that would merge without it", commentLine)
