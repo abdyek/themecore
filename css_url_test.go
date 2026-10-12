@@ -72,15 +72,18 @@ func TestURLsInvalidForm(t *testing.T) {
 		`a{background:url(var(--x))}`,
 		`a{background:src(var(--x))}`,
 	}
-	want := "invalid url()"
+	wants := []string{
+		"bad url",
+		"invalid url()",
+	}
 	for i, css := range sheets {
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
 			_, err := Transform([]byte(css))
 			if err == nil {
 				t.Fatalf("expected error, got nil")
 			}
-			if !strings.Contains(err.Error(), want) {
-				t.Fatalf("error %q does not contain %q", err.Error(), want)
+			if !strings.Contains(err.Error(), wants[i]) {
+				t.Fatalf("error %q does not contain %q", err.Error(), wants[i])
 			}
 		})
 	}
