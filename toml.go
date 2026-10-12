@@ -3,19 +3,29 @@ package themecore
 import (
 	"bytes"
 	"errors"
+	"fmt"
+	"strings"
 
 	"github.com/pelletier/go-toml/v2"
 )
 
 // decodeTOML decodes the TOML v1.0.0 document b into v. Keys that v does not
-// define are rejected.
+// define are rejected with an "unknown key" error naming the first one.
 func decodeTOML(b []byte, v any) error {
 	if err := checkEscapes(b); err != nil {
 		return err
 	}
 	d := toml.NewDecoder(bytes.NewReader(b))
 	d.DisallowUnknownFields()
-	return d.Decode(v)
+	err := d.Decode(v)
+	if err == nil {
+		return nil
+	}
+	var e *toml.StrictMissingError
+	if errors.As(err, &e) && len(e.Errors) > 0 {
+		return fmt.Errorf("unknown key %s", strings.Join([]string(e.Errors[0].Key()), "."))
+	}
+	return err
 }
 
 // checkEscapes rejects the escape \e, which TOML v1.1.0 adds and go-toml
