@@ -81,6 +81,20 @@ b, err := themecore.ParseBuilt(data)
 err = b.CheckInstallDir("themes/acme/minimal/0.1.0")
 ```
 
+## `contract.toml`
+
+`ParseContract` parses and validates `contract.toml` under the schema `https://umono.dev/schemas/theme-contract/v1`. Only the structural layer is checked for now; the sources are not parsed with Compono yet.
+
+| Key | Required | Rule |
+| --- | --- | --- |
+| `id` | Yes | `org/id`, both parts kebab-case |
+| `version` | Yes | `vMAJOR.MINOR`, e.g. `v1.0` |
+| `description` | No | At most 280 characters |
+| `layouts` | Yes | At least one `[[layouts]]` with a unique kebab-case `id`, an optional `description` and a non-empty `source` |
+| `components` | No | `[[components]]` with a unique `SCREAMING_SNAKE_CASE` `name`, a non-empty `source` and an optional boolean `expose` |
+
+Sources are the only multi-line text fields.
+
 ## License
 
 MIT
