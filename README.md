@@ -43,6 +43,18 @@ Both check the package limits before any file is read, counting the real bytes w
 
 The package root holds only `built.toml`, `contract.toml`, `checksums.json`, `attributes.toml` and `LICENSE`, and `assets/` is the only directory. Every path segment matches `[a-z0-9][a-z0-9._-]*` and is at most 64 bytes; `LICENSE` is the only exception. Empty directories, symlinks, hard links, duplicate or encrypted zip entries and compression methods other than store and deflate are rejected.
 
+`assets/theme.css` is required and is the only CSS file. Every other file under `assets/` has one of these extensions, and its content must start with the format's magic bytes:
+
+| Extension | Magic bytes |
+| --- | --- |
+| `.woff2` | `wOF2` |
+| `.woff` | `wOFF` |
+| `.png` | PNG signature |
+| `.jpeg`, `.jpg` | `FF D8 FF` |
+| `.webp` | `RIFF`, then `WEBP` at byte 8 |
+| `.avif` | An ISO BMFF `ftyp` box with the brand `avif` or `avis` |
+| `.gif` | `GIF87a` or `GIF89a` |
+
 ## `theme.toml`
 
 `ParseManifest` parses and validates `theme.toml`, the manifest the theme author writes:
