@@ -46,6 +46,9 @@ func checkGrammarIn(rules []cssRule, canonical bool, ctx cssContext) error {
 // the at-rule-specific checks apply.
 func checkRule(r cssRule, canonical bool, ctx cssContext) error {
 	if r.at == "" {
+		if err := checkSelector(r.prelude, r.line); err != nil {
+			return err
+		}
 		if canonical && ctx != cssContextScope {
 			return fmt.Errorf("theme.css:%d: style rule outside @scope (umono-root)", r.line)
 		}
