@@ -10,6 +10,9 @@ const schemaManifestV1 = "https://umono.dev/schemas/theme-manifest/v1"
 // schemaBuiltV1 is the schema URL of built.toml.
 const schemaBuiltV1 = "https://umono.dev/schemas/theme-built/v1"
 
+// schemaContractV1 is the schema URL of contract.toml.
+const schemaContractV1 = "https://umono.dev/schemas/theme-contract/v1"
+
 // readSchema is the schema check: it decodes b into a map and checks that its
 // schema key is one of supported. The rest of the file is checked by the
 // file's own validator; the map tells it which keys are present. Errors are
