@@ -69,9 +69,22 @@ func checkRule(r cssRule, canonical bool, ctx cssContext) error {
 			return err
 		}
 		return checkGrammarIn(r.rules, canonical, cssContextScope)
-	case "media", "supports":
+	case "media":
 		if !r.block {
 			return fmt.Errorf("theme.css:%d: @%s must have a block", r.line, r.at)
+		}
+		if len(trimSpace(r.prelude)) > 0 {
+			if err := checkMediaQueryList(r.prelude, true, r.line); err != nil {
+				return err
+			}
+		}
+		return checkGrammarIn(r.rules, canonical, cssContextBlock)
+	case "supports":
+		if !r.block {
+			return fmt.Errorf("theme.css:%d: @%s must have a block", r.line, r.at)
+		}
+		if err := checkSupports(r.prelude, r.line); err != nil {
+			return err
 		}
 		return checkGrammarIn(r.rules, canonical, cssContextBlock)
 	case "layer":
