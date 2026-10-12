@@ -26,7 +26,23 @@ type Break struct {
 }
 
 // Features are the feature rows of the ledger.
-var Features = []Feature{}
+var Features = []Feature{
+	{ID: "pkg.attributes", IntroducedIn: 1, Detect: detectFile("attributes.toml")},
+	{ID: "attr.class", IntroducedIn: 1, Detect: detectAddress(hasClass)},
+	{ID: "attr.sizes", IntroducedIn: 1, Detect: detectAddress(hasSizes)},
+	{ID: "attr.address.layout", IntroducedIn: 1, Detect: detectAddress(layoutAddress)},
+	{ID: "attr.address.layout-builtin", IntroducedIn: 1, Detect: detectAddress(layoutBuiltinAddress)},
+	{ID: "attr.address.layout-component-builtin", IntroducedIn: 1, Detect: detectAddress(layoutComponentBuiltinAddress)},
+	{ID: "pkg.license", IntroducedIn: 1, Detect: detectFile("LICENSE")},
+	{ID: "assets.woff2", IntroducedIn: 1, Detect: detectAsset(".woff2")},
+	{ID: "assets.woff", IntroducedIn: 1, Detect: detectAsset(".woff")},
+	{ID: "assets.png", IntroducedIn: 1, Detect: detectAsset(".png")},
+	{ID: "assets.jpeg", IntroducedIn: 1, Detect: detectAsset(".jpeg")},
+	{ID: "assets.jpg", IntroducedIn: 1, Detect: detectAsset(".jpg")},
+	{ID: "assets.webp", IntroducedIn: 1, Detect: detectAsset(".webp")},
+	{ID: "assets.avif", IntroducedIn: 1, Detect: detectAsset(".avif")},
+	{ID: "assets.gif", IntroducedIn: 1, Detect: detectAsset(".gif")},
+}
 
 // Breaks are the break rows of the ledger.
 var Breaks = []Break{
