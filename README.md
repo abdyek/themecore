@@ -118,6 +118,24 @@ err = b.CheckInstallDir("themes/acme/minimal/0.1.0")
 
 Sources are the only multi-line text fields.
 
+## Theme API
+
+The capability ledger (`Features` and `Breaks`) is the single source of the Theme API versions. Rows are only appended.
+
+```go
+themecore.ThemeAPICurrent() // newest Theme API version
+themecore.ThemeAPIMin()     // oldest Theme API version still accepted
+```
+
+`DetectThemeAPIVersion` returns the version a package declares in `built.toml` during build, with the evidence for it. `DetectFeatureFloor` returns the largest version of the features a package uses; install and activation reject a package whose declared version is lower.
+
+```go
+version, evidence, err := themecore.DetectThemeAPIVersion(p)
+floor, evidence, err := themecore.DetectFeatureFloor(p)
+```
+
+Each `Signal` names a feature, the version that introduced it and the first place in the package that shows it.
+
 ## License
 
 MIT
