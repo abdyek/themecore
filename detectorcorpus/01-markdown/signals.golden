@@ -1,0 +1,12 @@
+compono.markdown.heading contract.toml:layouts[0].source:2
+compono.markdown.p contract.toml:layouts[0].source:4
+compono.markdown.br contract.toml:layouts[0].source:4
+compono.markdown.em contract.toml:layouts[0].source:4
+compono.markdown.strong contract.toml:layouts[0].source:4
+compono.markdown.link contract.toml:layouts[0].source:4
+compono.markdown.inline-code contract.toml:layouts[0].source:4
+compono.markdown.code-block contract.toml:layouts[0].source:17
+compono.markdown.list contract.toml:layouts[0].source:7
+compono.markdown.blockquote contract.toml:layouts[0].source:9
+compono.markdown.hr contract.toml:layouts[0].source:11
+compono.markdown.table contract.toml:layouts[0].source:13

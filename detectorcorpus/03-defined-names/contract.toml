@@ -1,0 +1,20 @@
+schema = "https://umono.dev/schemas/theme-contract/v1"
+id = "corpus/defined-names"
+version = "v1.0"
+
+[[layouts]]
+id = "post"
+source = '''
+{{ NAV }}
+{{ LIST }}
+
+~ LIST
+l
+'''
+
+[[components]]
+name = "NAV"
+expose = true
+source = '''
+n
+'''

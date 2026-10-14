@@ -1,0 +1,6 @@
+pkg.attributes attributes.toml
+attr.class post NAV
+attr.sizes post IMAGE
+attr.address.layout-builtin post IMAGE
+compono.builtin.image post IMAGE
+compono.markdown.p contract.toml:layouts[0].source:5

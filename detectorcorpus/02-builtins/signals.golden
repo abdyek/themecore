@@ -1,0 +1,11 @@
+compono.builtin.link contract.toml:components[0].source:2
+compono.builtin.image contract.toml:layouts[0].source:1
+compono.builtin.nav contract.toml:layouts[0].source:7
+compono.builtin.list contract.toml:layouts[0].source:10
+compono.builtin.details contract.toml:layouts[0].source:17
+compono.builtin.header contract.toml:layouts[0].source:2
+compono.builtin.main contract.toml:layouts[0].source:3
+compono.builtin.footer contract.toml:layouts[0].source:4
+compono.builtin.article contract.toml:layouts[0].source:13
+compono.builtin.aside contract.toml:layouts[0].source:14
+compono.markdown.p contract.toml:layouts[0].source:20

@@ -1,0 +1,35 @@
+schema = "https://umono.dev/schemas/theme-contract/v1"
+id = "corpus/builtins"
+version = "v1.0"
+
+[[layouts]]
+id = "post"
+source = '''
+~ body = NO_MATTER cover = IMAGE
+{{ HEADER content = TOP }}
+{{ MAIN content = BODY }}
+{{ FOOTER content = BOTTOM }}
+
+~ TOP
+{{ NAV content = MENU }}
+
+~ MENU
+{{ LIST items = [] item = ITEM }}
+
+~ BODY
+{{ ARTICLE content = TEXT }}
+{{ ASIDE content = TEXT }}
+
+~ TEXT
+{{ DETAILS text = "x" content = BOTTOM }}
+
+~ BOTTOM
+b
+'''
+
+[[components]]
+name = "ITEM"
+source = '''
+~ item = {}
+{{ LINK text = item.text url = item.url }}
+'''
