@@ -1,0 +1,27 @@
+schema = "https://umono.dev/schemas/theme-contract/v1"
+id = "corpus/markdown"
+version = "v1.0"
+
+[[layouts]]
+id = "post"
+source = '''
+~ title = ""
+# {{ title }}
+
+a *e* **s** `c` [l](/u)
+b
+
+- x
+
+> q
+
+---
+
+| a |
+| --- |
+| 1 |
+
+```
+kod
+```
+'''
