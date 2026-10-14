@@ -1,0 +1,19 @@
+schema = "https://umono.dev/schemas/theme-attributes/v1"
+
+[address."post MAIN_MENU LINK"]
+class = "a"
+
+[address."post-list MAIN_MENU LINK"]
+class = "b"
+
+[address."post-list NESTED LINK"]
+class = "c"
+
+[address."home FOOTER_MENU LINK"]
+class = "d"
+
+[address."home UNUSED LINK"]
+class = "e"
+
+[address."post LINK"]
+class = "f"

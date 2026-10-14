@@ -1,0 +1,51 @@
+schema = "https://umono.dev/schemas/theme-contract/v1"
+id = "example/blog"
+version = "v1.0"
+
+[[layouts]]
+id = "post"
+source = '''
+{{ MAIN_MENU }}
+'''
+
+[[layouts]]
+id = "post-list"
+source = '''
+{{ LIST_BODY }}
+'''
+
+[[layouts]]
+id = "home"
+source = '''
+~ c = FOOTER_MENU
+{{ c }}
+'''
+
+[[components]]
+name = "MAIN_MENU"
+expose = true
+source = '''
+{{ LINK text = "a" url = "/" }}
+'''
+
+[[components]]
+name = "LIST_BODY"
+expose = true
+source = '''
+{{ NESTED }}
+'''
+
+[[components]]
+name = "NESTED"
+expose = true
+source = 'n'
+
+[[components]]
+name = "FOOTER_MENU"
+expose = true
+source = 'f'
+
+[[components]]
+name = "UNUSED"
+expose = true
+source = 'u'

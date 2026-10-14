@@ -1,6 +1,7 @@
 package themecore
 
 import (
+	"os"
 	"reflect"
 	"testing"
 )
@@ -83,5 +84,23 @@ func TestLintNothing(t *testing.T) {
 				t.Errorf("Lint() = %v, want nil", got)
 			}
 		})
+	}
+}
+
+func TestLintDeadAddresses(t *testing.T) {
+	files := map[string][]byte{}
+	for _, name := range []string{"contract.toml", "attributes.toml"} {
+		b, err := os.ReadFile("testdata/lint/" + name)
+		if err != nil {
+			t.Fatalf("read %s: %v", name, err)
+		}
+		files[name] = b
+	}
+	want := []Warning{
+		{Message: "home UNUSED LINK never matches: the layout home never renders UNUSED", Where: "home UNUSED LINK"},
+		{Message: "post-list MAIN_MENU LINK never matches: the layout post-list never renders MAIN_MENU", Where: "post-list MAIN_MENU LINK"},
+	}
+	if got := Lint(Package{Files: files}); !reflect.DeepEqual(got, want) {
+		t.Errorf("Lint = %#v, want %#v", got, want)
 	}
 }
