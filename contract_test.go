@@ -1,6 +1,7 @@
 package themecore
 
 import (
+	"errors"
 	"reflect"
 	"sort"
 	"strings"
@@ -200,5 +201,56 @@ func TestParseContractSourceWhitespace(t *testing.T) {
 	want := "a\r\n\tb\n"
 	if c.Layouts[0].Source != want {
 		t.Errorf("Layouts[0].Source: got %q, want %q", c.Layouts[0].Source, want)
+	}
+}
+
+func TestParseContractRejectsSourceSyntaxErrors(t *testing.T) {
+	post := "id = " + string(rune(34)) + "post" + string(rune(34))
+	cases := []struct {
+		name   string
+		tables string
+		want   string
+	}{
+		{
+			name:   "invalid expression in layout",
+			tables: layoutTable(post, `source = '{{ IF x }}'`),
+			want:   "contract.toml: layouts[0].source: 1:1: invalid-expression",
+		},
+		{
+			name:   "unclosed expression in layout",
+			tables: layoutTable(post, `source = 'a {{ b'`),
+			want:   "contract.toml: layouts[0].source: 1:3: unclosed-expression",
+		},
+		{
+			name:   "invalid expression in uncalled local",
+			tables: layoutTable(post, "source = '''\nok\n\n~ X\n{{ Bad }}\n'''"),
+			want:   "contract.toml: layouts[0].source: 4:1: invalid-expression",
+		},
+		{
+			name:   "invalid parameter definition in component",
+			tables: layoutTable(post, `source = 'x'`) + "\n\n" + componentTable(`name = "A"`, "source = '''\n~ y\n{{ y }}\n'''"),
+			want:   "contract.toml: components[0].source: 1:3: invalid-parameter-definition",
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := ParseContract([]byte(contractDoc(nil, tc.tables)))
+			if err == nil {
+				t.Fatalf("expected error, got nil")
+			}
+			if !strings.Contains(err.Error(), tc.want) {
+				t.Errorf("error %q does not contain %q", err.Error(), tc.want)
+			}
+			if !errors.Is(err, ErrOutdated) {
+				t.Errorf("error %q does not wrap ErrOutdated", err.Error())
+			}
+		})
+	}
+}
+
+func TestParseContractAcceptsValueDependentErrors(t *testing.T) {
+	tables := layoutTable("id = "+string(rune(34))+"post"+string(rune(34)), "source = '''\n{{ title }}\n{{ GLOBAL_OR_COMPONENT }}\n'''")
+	if _, err := ParseContract([]byte(contractDoc(nil, tables))); err != nil {
+		t.Fatalf("unexpected error: %v", err)
 	}
 }
