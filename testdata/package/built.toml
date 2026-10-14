@@ -1,0 +1,7 @@
+schema = "https://umono.dev/schemas/theme-built/v1"
+id = "acme/minimal"
+contract = "example/blog@v1.0"
+theme-api-version = 1
+name = "Minimal"
+version = "0.1.0"
+built-at = 2026-10-14T00:00:00Z
