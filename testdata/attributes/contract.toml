@@ -1,0 +1,39 @@
+schema = "https://umono.dev/schemas/theme-contract/v1"
+id = "example/blog"
+version = "v1.0"
+
+[[layouts]]
+id = "post"
+source = '''
+{{ MAIN_MENU }}
+{{ POST_BODY }}
+{{ HIDDEN }}
+{{ NAV }}
+'''
+
+[[layouts]]
+id = "home"
+source = '''
+{{ LIST }}
+
+~ LIST
+l
+'''
+
+[[components]]
+name = "MAIN_MENU"
+expose = true
+source = 'm'
+
+[[components]]
+name = "POST_BODY"
+expose = true
+source = 'b'
+
+[[components]]
+name = "HIDDEN"
+source = 'h'
+
+[[components]]
+name = "NAV"
+source = 'n'
