@@ -87,6 +87,14 @@ Only `assets/`, `attributes.toml` and `LICENSE` are read from `dir` into the pac
 
 `CheckPackage` checks that `built.toml`, `contract.toml`, `checksums.json` and `assets/theme.css` exist, parses `built.toml` and `contract.toml` and checks that the contract of `built.toml` is the package's `contract.toml`. Then it checks the assets, `Verify`, the files the CSS URLs point to, `attributes.toml` against the contract and `LICENSE`. Last, it rejects a `theme-api-version` lower than the version of the features the package uses. The `Result` holds the contract, the compiled attribute table (empty without `attributes.toml`) and the feature floor with its evidence.
 
+`CheckDev` is for Umono's dev mode. `dir` is `themes/dev/dev/0.0.0/` and `root` the theme project (`UMONO_THEME_DEV`):
+
+```go
+result, err := themecore.CheckDev(dir, root) // on every request; nothing is cached
+```
+
+It runs the checks of `CheckPackage` with the privileges of `dev/dev`: there is no `checksums.json`; `assets/`, `attributes.toml` and `contract.toml` may be symlinks that resolve inside `root`; `assets/theme.css` goes through `Transform` instead of `Verify`; `built.toml` has the id `dev/dev` and the version `0.0.0`, which `ParseBuilt` and `CheckPackage` reject. The package limits and content, `built.toml`, `contract.toml`, `LICENSE` and the feature floor are fatal. Errors of `theme.css`, `attributes.toml` and single assets are returned in the result instead, so dev mode goes on: `CSSErr`, `AttributesErr` and `AssetErrs`.
+
 ## `checksums.json`
 
 `Checksums` returns the content of `checksums.json` during build; `VerifyChecksums` checks a package against it during install and activation:
