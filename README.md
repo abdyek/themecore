@@ -71,13 +71,21 @@ The package root holds only `built.toml`, `contract.toml`, `checksums.json`, `at
 
 ## Checks
 
-The checks of a package run from one place, in a fixed order; CLI and Umono do not call them one by one. `CheckPackage` is for install and activation:
+The checks of a package run from one place, in the order of the static check table; CLI and Umono do not call them one by one. `CheckPackage` is for install and activation:
 
 ```go
 result, err := themecore.CheckPackage(p) // after VerifyChecksums and the Theme API range
 ```
 
-It checks that `built.toml`, `contract.toml`, `checksums.json` and `assets/theme.css` exist, parses `built.toml` and `contract.toml` and checks that the contract of `built.toml` is the package's `contract.toml`. Then it checks the assets, `Verify`, the files the CSS URLs point to, `attributes.toml` against the contract and `LICENSE`. Last, it rejects a `theme-api-version` lower than the version of the features the package uses. The `Result` holds the contract, the compiled attribute table (empty without `attributes.toml`) and the feature floor with its evidence.
+`CheckSource` is for build and the dev proxy. `dir` is the development directory and `contract` the contract file that `theme.toml` refers to; `themecore` does not know where the CLI caches it:
+
+```go
+p, report, err := themecore.CheckSource(dir, contract)
+```
+
+Only `assets/`, `attributes.toml` and `LICENSE` are read from `dir` into the package, with `contract` as `contract.toml`; `theme.toml` is checked but does not go in, and other files such as `.dev/` and `dist/` are not read. An empty directory is skipped, any other file that breaks the package rules stops the build. `assets/theme.css` is replaced by its canonical CSS. The returned package is what goes into the built file; the CLI adds `built.toml` with `report.Version` and then `checksums.json`. `report` also holds the evidence of the version and the `Lint` warnings.
+
+`CheckPackage` checks that `built.toml`, `contract.toml`, `checksums.json` and `assets/theme.css` exist, parses `built.toml` and `contract.toml` and checks that the contract of `built.toml` is the package's `contract.toml`. Then it checks the assets, `Verify`, the files the CSS URLs point to, `attributes.toml` against the contract and `LICENSE`. Last, it rejects a `theme-api-version` lower than the version of the features the package uses. The `Result` holds the contract, the compiled attribute table (empty without `attributes.toml`) and the feature floor with its evidence.
 
 ## `checksums.json`
 
