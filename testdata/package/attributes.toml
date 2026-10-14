@@ -1,0 +1,7 @@
+schema = "https://umono.dev/schemas/theme-attributes/v1"
+
+[address."post"]
+class = "layout-post"
+
+[address."post POST_BODY IMAGE"]
+sizes = "100vw"

@@ -69,6 +69,16 @@ The package root holds only `built.toml`, `contract.toml`, `checksums.json`, `at
 | `.avif` | An ISO BMFF `ftyp` box with the brand `avif` or `avis` |
 | `.gif` | `GIF87a` or `GIF89a` |
 
+## Checks
+
+The checks of a package run from one place, in a fixed order; CLI and Umono do not call them one by one. `CheckPackage` is for install and activation:
+
+```go
+result, err := themecore.CheckPackage(p) // after VerifyChecksums and the Theme API range
+```
+
+It checks that `built.toml`, `contract.toml`, `checksums.json` and `assets/theme.css` exist, parses `built.toml` and `contract.toml` and checks that the contract of `built.toml` is the package's `contract.toml`. Then it checks the assets, `Verify`, the files the CSS URLs point to, `attributes.toml` against the contract and `LICENSE`. Last, it rejects a `theme-api-version` lower than the version of the features the package uses. The `Result` holds the contract, the compiled attribute table (empty without `attributes.toml`) and the feature floor with its evidence.
+
 ## `checksums.json`
 
 `Checksums` returns the content of `checksums.json` during build; `VerifyChecksums` checks a package against it during install and activation:
