@@ -18,6 +18,12 @@ type Built struct {
 
 // ParseBuilt parses and validates built.toml.
 func ParseBuilt(b []byte) (Built, error) {
+	return parseBuilt(b, false)
+}
+
+// parseBuilt parses and validates built.toml. With dev, it is the built.toml
+// of dev/dev (validateManifest).
+func parseBuilt(b []byte, dev bool) (Built, error) {
 	const file = "built.toml"
 	doc, err := readSchema(file, b, schemaBuiltV1)
 	if err != nil {
@@ -40,7 +46,7 @@ func ParseBuilt(b []byte) (Built, error) {
 	if err := decodeTOML(b, &built); err != nil {
 		return Built{}, fmt.Errorf("%s: %w", file, err)
 	}
-	if err := validateManifest(file, doc, built.Manifest); err != nil {
+	if err := validateManifest(file, doc, built.Manifest, dev); err != nil {
 		return Built{}, err
 	}
 	if built.ThemeAPIVersion < 1 {
