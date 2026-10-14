@@ -14,10 +14,11 @@ type Warning struct {
 
 // Lint returns warnings for mistakes that are valid CSS but never match.
 // Only development tools call it; it is not part of the Theme API, and
-// install and activation do not call it. It currently reports root classes
-// used without :scope (themecore, Kök Sınıfı Uyarısı). A package whose
-// attributes.toml or assets/theme.css cannot be read gets no warnings; those
-// errors are reported by the checks.
+// install and activation do not call it. It reports root classes used
+// without :scope and addresses whose component the layout never renders
+// (themecore, Kök Sınıfı Uyarısı and Ölü Adres Uyarısı). A package whose
+// attributes.toml, contract.toml or assets/theme.css cannot be read gets
+// no warnings; those errors are reported by the checks.
 func Lint(p Package) []Warning {
 	b, ok := p.Files["attributes.toml"]
 	if !ok {
@@ -28,6 +29,16 @@ func Lint(p Package) []Warning {
 		return nil
 	}
 
+	warnings := append(rootClassWarnings(p, addrs), deadAddressWarnings(p, addrs)...)
+	if len(warnings) == 0 {
+		return nil
+	}
+	return warnings
+}
+
+// rootClassWarnings returns the warnings for root classes used without
+// :scope in the canonical CSS of p, or nil.
+func rootClassWarnings(p Package, addrs map[string]map[string]string) []Warning {
 	rootClasses := make(map[string]struct{})
 	for address, attrs := range addrs {
 		if addressParts(address) != 1 {
