@@ -1,0 +1,33 @@
+schema = "https://umono.dev/schemas/theme-contract/v1"
+id = "example/blog"
+version = "v0.1"
+
+[[layouts]]
+id = "post"
+source = '''
+~ title = "" body = NO_MATTER media = IMAGE
+# {{ title }}
+
+{{ LINK text = title url = "/" }}
+
+{{ POST_BODY body = body }}
+
+~ LIST
+local named like a built-in
+'''
+
+[[components]]
+name = "POST_BODY"
+expose = true
+source = '''
+~ body = NO_MATTER
+**{{ body }}**
+{{ MAIN content = LIST }}
+'''
+
+[[components]]
+name = "ASIDE"
+source = '''
+x
+y
+'''
