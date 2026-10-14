@@ -68,3 +68,59 @@ func CheckPackage(p Package) (Result, error) {
 	}
 	return Result{Contract: c, Attributes: attributes, Floor: floor, Evidence: evidence}, nil
 }
+
+// BuildReport is the outcome of CheckSource.
+type BuildReport struct {
+	// Version is theme-api-version, from DetectThemeAPIVersion. The CLI
+	// writes it to built.toml.
+	Version  int
+	Evidence []Signal
+	// Warnings are those of Lint. They do not stop the build.
+	Warnings []Warning
+}
+
+// CheckSource runs the checks of build and of the dev proxy on the
+// development directory dir. contract is the file of the contract that
+// theme.toml refers to, from the CLI's cache; themecore does not know the
+// cache layout. The order is that of the static check table: the package
+// limits and content, theme.toml, contract.toml, the assets, Transform, the
+// files the CSS URLs point to, attributes.toml against the contract and
+// LICENSE. The returned package is what goes into the built file, the
+// canonical CSS included; the CLI adds built.toml and then checksums.json.
+func CheckSource(dir string, contract []byte) (Package, BuildReport, error) {
+	p, manifest, err := readSource(dir, contract)
+	if err != nil {
+		return Package{}, BuildReport{}, err
+	}
+	if _, err := ParseManifest(manifest); err != nil {
+		return Package{}, BuildReport{}, err
+	}
+	c, err := ParseContract(contract)
+	if err != nil {
+		return Package{}, BuildReport{}, err
+	}
+	if err := checkAssets(p); err != nil {
+		return Package{}, BuildReport{}, err
+	}
+	canonical, err := Transform(p.Files[themeCSS])
+	if err != nil {
+		return Package{}, BuildReport{}, err
+	}
+	p.Files[themeCSS] = canonical
+	if err := checkAssetURLs(p); err != nil {
+		return Package{}, BuildReport{}, err
+	}
+	if b, ok := p.Files["attributes.toml"]; ok {
+		if _, err := CompileAttributes(b, c); err != nil {
+			return Package{}, BuildReport{}, err
+		}
+	}
+	if err := checkLicense(p); err != nil {
+		return Package{}, BuildReport{}, err
+	}
+	version, evidence, err := DetectThemeAPIVersion(p)
+	if err != nil {
+		return Package{}, BuildReport{}, err
+	}
+	return p, BuildReport{Version: version, Evidence: evidence, Warnings: Lint(p)}, nil
+}
