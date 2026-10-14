@@ -21,6 +21,12 @@ func DetectFeatureFloor(p Package) (floor int, evidence []Signal, err error) {
 			return 0, nil, fmt.Errorf("attributes.toml: cannot be read for feature detection: %w", err)
 		}
 	}
+	if b, ok := p.Files["contract.toml"]; ok {
+		var c Contract
+		if err := decodeTOML(b, &c); err != nil {
+			return 0, nil, fmt.Errorf("contract.toml: cannot be read for feature detection: %w", err)
+		}
+	}
 	if b, ok := p.Files[themeCSS]; ok {
 		if _, err := parseCSS(b); err != nil {
 			return 0, nil, fmt.Errorf("assets/theme.css: cannot be read for feature detection: %w", err)

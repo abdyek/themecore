@@ -1,5 +1,7 @@
 package themecore
 
+import "strings"
+
 // The capability ledger. Rows are only appended: an existing row is never
 // edited or deleted, and an ID is never reused. Extending the Theme API is a
 // Feature row, narrowing it is a Break row.
@@ -47,6 +49,28 @@ var Features = []Feature{
 	{ID: "css.at.layer", IntroducedIn: 1, Detect: detectAtRule("layer")},
 	{ID: "css.at.font-face", IntroducedIn: 1, Detect: detectAtRule("font-face")},
 	{ID: "css.at.keyframes", IntroducedIn: 1, Detect: detectAtRule("keyframes")},
+	{ID: "compono.builtin.link", IntroducedIn: 1, Detect: detectBuiltin("LINK")},
+	{ID: "compono.builtin.image", IntroducedIn: 1, Detect: detectBuiltin("IMAGE")},
+	{ID: "compono.builtin.nav", IntroducedIn: 1, Detect: detectBuiltin("NAV")},
+	{ID: "compono.builtin.list", IntroducedIn: 1, Detect: detectBuiltin("LIST")},
+	{ID: "compono.builtin.details", IntroducedIn: 1, Detect: detectBuiltin("DETAILS")},
+	{ID: "compono.builtin.header", IntroducedIn: 1, Detect: detectBuiltin("HEADER")},
+	{ID: "compono.builtin.main", IntroducedIn: 1, Detect: detectBuiltin("MAIN")},
+	{ID: "compono.builtin.footer", IntroducedIn: 1, Detect: detectBuiltin("FOOTER")},
+	{ID: "compono.builtin.article", IntroducedIn: 1, Detect: detectBuiltin("ARTICLE")},
+	{ID: "compono.builtin.aside", IntroducedIn: 1, Detect: detectBuiltin("ASIDE")},
+	{ID: "compono.markdown.heading", IntroducedIn: 1, Detect: detectMarkdown("heading")},
+	{ID: "compono.markdown.p", IntroducedIn: 1, Detect: detectMarkdown("p")},
+	{ID: "compono.markdown.br", IntroducedIn: 1, Detect: detectMarkdown("br")},
+	{ID: "compono.markdown.em", IntroducedIn: 1, Detect: detectMarkdown("em")},
+	{ID: "compono.markdown.strong", IntroducedIn: 1, Detect: detectMarkdown("strong")},
+	{ID: "compono.markdown.link", IntroducedIn: 1, Detect: detectMarkdown("link")},
+	{ID: "compono.markdown.inline-code", IntroducedIn: 1, Detect: detectMarkdown("inline-code")},
+	{ID: "compono.markdown.code-block", IntroducedIn: 1, Detect: detectMarkdown("code-block")},
+	{ID: "compono.markdown.list", IntroducedIn: 1, Detect: detectMarkdown("list")},
+	{ID: "compono.markdown.blockquote", IntroducedIn: 1, Detect: detectMarkdown("blockquote")},
+	{ID: "compono.markdown.hr", IntroducedIn: 1, Detect: detectMarkdown("hr")},
+	{ID: "compono.markdown.table", IntroducedIn: 1, Detect: detectMarkdown("table")},
 }
 
 // Breaks are the break rows of the ledger.
@@ -87,4 +111,33 @@ func themeAPIMin(breaks []Break) int {
 		}
 	}
 	return max
+}
+
+// Builtins returns the names of the built-ins open to themes, from the
+// compono.builtin.* rows of Features in ledger order: the last segment of
+// the ID in upper case, with "-" as "_". Address validation, the detectors
+// and the undefined call rule look only at this set, not at Compono's list.
+// It returns a new slice on every call.
+func Builtins() []string {
+	var names []string
+	for _, f := range Features {
+		if rest, ok := strings.CutPrefix(f.ID, "compono.builtin."); ok {
+			names = append(names, strings.ToUpper(strings.ReplaceAll(rest, "-", "_")))
+		}
+	}
+	return names
+}
+
+// MarkdownElements returns the names of the Markdown elements open to
+// themes, from the compono.markdown.* rows of Features in ledger order: the
+// last segment of the ID, the name of the element's spec. It returns a new
+// slice on every call.
+func MarkdownElements() []string {
+	var names []string
+	for _, f := range Features {
+		if rest, ok := strings.CutPrefix(f.ID, "compono.markdown."); ok {
+			names = append(names, rest)
+		}
+	}
+	return names
 }

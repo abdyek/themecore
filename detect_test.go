@@ -31,6 +31,8 @@ func TestDetectFeatureFloor(t *testing.T) {
 		{Feature: "attr.address.layout-component-builtin", IntroducedIn: 1, Where: "post MAIN_MENU LINK"},
 		{Feature: "pkg.license", IntroducedIn: 1, Where: "LICENSE"},
 		{Feature: "assets.png", IntroducedIn: 1, Where: "assets/a.png"},
+		{Feature: "compono.builtin.link", IntroducedIn: 1, Where: "post MAIN_MENU LINK"},
+		{Feature: "compono.builtin.image", IntroducedIn: 1, Where: "post IMAGE"},
 	}
 	if !reflect.DeepEqual(evidence, want) {
 		t.Errorf("DetectFeatureFloor: evidence mismatch:\ngot  %#v\nwant %#v", evidence, want)
