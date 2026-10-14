@@ -192,6 +192,16 @@ themecore.MarkdownElements() // "heading", "p", "br", …
 
 Address validation, the detectors and the undefined call rule look only at these sets, not at Compono's lists, so a built-in Compono adds stays closed to themes until its row is added. A built-in detector looks for a reference in `contract.toml` that resolves to the built-in (a call, a value or a default) and for an address of `attributes.toml` whose type filter is it. A name the contract defines as a component, in `[[components]]` or as a local, is never a built-in. A Markdown detector looks for the element in `contract.toml`. The place of a signal in `contract.toml` is the key of the source and the line in it, such as `contract.toml:layouts[0].source:4`.
 
+The detectors that read `contract.toml` depend on how Compono parses it. `themecore` embeds a detector corpus (`detectorcorpus/`: contract inputs and the signals each must give), and a program that builds `themecore` in runs it in its tests, with the Compono version it is built with:
+
+```go
+func TestDetectorCorpus(t *testing.T) {
+	if err := themecore.DetectorCorpus(); err != nil {
+		t.Fatal(err)
+	}
+}
+```
+
 ## License
 
 MIT
