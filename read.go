@@ -87,8 +87,12 @@ func ReadZip(r io.ReaderAt, size int64) (Package, error) {
 // ReadDir reads the installed form of a package from dir. The package limits
 // are checked with the sizes from the file system's metadata before any file is
 // read. Symlinks are not followed: anything that is not a regular file or a
-// directory is rejected, and so are hard links.
+// directory is rejected, and so are hard links. Hard links can only be
+// detected on Unix, so ReadDir fails on other platforms.
 func ReadDir(dir string) (Package, error) {
+	if !hardLinksDetected {
+		return Package{}, errors.New("package: hard links cannot be detected on this platform")
+	}
 	var entries []entry
 	var dirs []string
 	if err := filepath.WalkDir(dir, func(path string, d os.DirEntry, err error) error {
