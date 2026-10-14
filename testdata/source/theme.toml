@@ -1,0 +1,5 @@
+schema = "https://umono.dev/schemas/theme-manifest/v1"
+id = "acme/minimal"
+contract = "example/blog@v1.0"
+name = "Minimal"
+version = "0.1.0"
