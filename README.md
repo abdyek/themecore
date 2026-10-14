@@ -41,6 +41,8 @@ p, err := themecore.ReadDir("themes/acme/minimal/0.1.0")
 
 Both check the package limits before any file is read, counting the real bytes while reading, and then the package content allowlist.
 
+Hard links are detected by the link count of the file system, which only Unix gives. `ReadDir` therefore fails on other platforms instead of accepting a package it cannot check; `ReadZip` works everywhere.
+
 | Measure | Limit |
 | --- | --- |
 | Built file (zip) | 64 MB |
