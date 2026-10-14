@@ -55,3 +55,27 @@ func checkContractSyntax(sources []contractSource) error {
 	}
 	return nil
 }
+
+// checkContractCalls returns an error for the first call or value of the
+// sources that resolves to nothing: not to a local of its source, a
+// component of c or a built-in of Builtins. A default is not a call: it only
+// names the type of a parameter. The built-ins of the set are those of this
+// themecore, so the error wraps ErrOutdated.
+func checkContractCalls(c Contract, sources []contractSource) error {
+	known := map[string]bool{}
+	for _, name := range Builtins() {
+		known[name] = true
+	}
+	for _, comp := range c.Components {
+		known[comp.Name] = true
+	}
+	for _, s := range sources {
+		for _, ref := range s.analysis.Refs {
+			if ref.Kind == "default" || ref.Local || known[ref.Name] {
+				continue
+			}
+			return fmt.Errorf("contract.toml: %s: %d:%d: undefined component %s: %w", s.key, ref.Range.Start.Line, ref.Range.Start.Column, ref.Name, ErrOutdated)
+		}
+	}
+	return nil
+}
