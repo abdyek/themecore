@@ -249,7 +249,7 @@ func TestParseContractRejectsSourceSyntaxErrors(t *testing.T) {
 }
 
 func TestParseContractAcceptsValueDependentErrors(t *testing.T) {
-	tables := layoutTable("id = "+string(rune(34))+"post"+string(rune(34)), "source = '''\n{{ title }}\n{{ GLOBAL_OR_COMPONENT }}\n'''")
+	tables := layoutTable("id = "+string(rune(34))+"post"+string(rune(34)), "source = '''\n{{ title }}\n{{ GLOBAL_OR_COMPONENT }}\n'''") + "\n\n" + componentTable("name = "+string(rune(34))+"GLOBAL_OR_COMPONENT"+string(rune(34)), `source = 'x'`)
 	if _, err := ParseContract([]byte(contractDoc(nil, tables))); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
