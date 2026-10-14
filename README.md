@@ -132,7 +132,7 @@ err = b.CheckInstallDir("themes/acme/minimal/0.1.0")
 
 Sources are the only multi-line text fields.
 
-A source with a grammar error that does not depend on values (`invalid-expression`, `unclosed-expression` or `invalid-parameter-definition`), also in a local that is never called, cannot be parsed and is rejected. A published contract never has one, so the error means that the program is older than the contract. It wraps `ErrOutdated`, and CLI and Umono report that they are out of date:
+A source with a grammar error that does not depend on values (`invalid-expression`, `unclosed-expression` or `invalid-parameter-definition`), also in a local that is never called, cannot be parsed and is rejected. So is a call or a value that resolves to nothing: not to a local of its source, a component of the contract or a name of `Builtins`. A default (`content = NO_MATTER`) only names the type of a parameter and is not checked. A published contract has neither, so the error means that the program is older than the contract. It wraps `ErrOutdated`, and CLI and Umono report that they are out of date:
 
 ```go
 if errors.Is(err, themecore.ErrOutdated) {
