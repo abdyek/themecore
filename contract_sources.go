@@ -79,3 +79,19 @@ func checkContractCalls(c Contract, sources []contractSource) error {
 	}
 	return nil
 }
+
+// contractDefinedNames returns the names c defines as components: its
+// [[components]] and the locals of every source. Such a name never means a
+// built-in, in references or in addresses.
+func contractDefinedNames(c Contract, sources []contractSource) map[string]bool {
+	defined := map[string]bool{}
+	for _, comp := range c.Components {
+		defined[comp.Name] = true
+	}
+	for _, s := range sources {
+		for _, local := range s.analysis.Locals {
+			defined[local.Name] = true
+		}
+	}
+	return defined
+}
