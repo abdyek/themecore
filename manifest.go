@@ -36,7 +36,7 @@ func ParseManifest(b []byte) (Manifest, error) {
 	if err := decodeTOML(b, &m); err != nil {
 		return Manifest{}, fmt.Errorf("%s: %w", file, err)
 	}
-	if err := validateManifest(file, doc, m); err != nil {
+	if err := validateManifest(file, doc, m, false); err != nil {
 		return Manifest{}, err
 	}
 	return m, nil
@@ -44,8 +44,9 @@ func ParseManifest(b []byte) (Manifest, error) {
 
 // validateManifest checks the keys that theme.toml and built.toml share. doc
 // is the decoded document, which tells which keys are present; file is the
-// file name in messages.
-func validateManifest(file string, doc map[string]any, m Manifest) error {
+// file name in messages. With dev, the manifest is that of dev/dev, the theme
+// of Umono's dev mode: the id must be dev/dev and the version 0.0.0.
+func validateManifest(file string, doc map[string]any, m Manifest, dev bool) error {
 	if _, ok := doc["id"]; !ok {
 		return fmt.Errorf("%s: id: missing", file)
 	}
@@ -55,7 +56,10 @@ func validateManifest(file string, doc map[string]any, m Manifest) error {
 	if !idPattern.MatchString(m.ID) {
 		return fmt.Errorf("%s: id: must be org/id in kebab-case", file)
 	}
-	if m.ID == "dev/dev" {
+	if dev && m.ID != "dev/dev" {
+		return fmt.Errorf("%s: id: must be dev/dev in dev mode", file)
+	}
+	if !dev && m.ID == "dev/dev" {
 		return fmt.Errorf("%s: id: dev/dev is reserved", file)
 	}
 
@@ -90,6 +94,9 @@ func validateManifest(file string, doc map[string]any, m Manifest) error {
 	}
 	if !versionPattern.MatchString(m.Version) {
 		return fmt.Errorf("%s: version: must be MAJOR.MINOR.PATCH", file)
+	}
+	if dev && m.Version != "0.0.0" {
+		return fmt.Errorf("%s: version: must be 0.0.0 in dev mode", file)
 	}
 
 	if m.Description != nil {

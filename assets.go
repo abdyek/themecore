@@ -91,6 +91,20 @@ func isAVIF(b []byte) bool {
 	return false
 }
 
+// checkAsset checks a file under assets/ other than theme.css: its
+// extension must be allowed and its content must start with that format's
+// magic bytes.
+func checkAsset(name string, b []byte) error {
+	check, ok := assetTypes[path.Ext(name)]
+	if !ok {
+		return fmt.Errorf("package: %s: not an allowed asset type", name)
+	}
+	if !check(b) {
+		return fmt.Errorf("package: %s: content does not match its extension", name)
+	}
+	return nil
+}
+
 // checkAssets checks the files under assets/: assets/theme.css must exist,
 // every other file must have an allowed extension, and its content must start
 // with that format's magic bytes. Other paths of the package are not checked
@@ -111,13 +125,8 @@ func checkAssets(p Package) error {
 	}
 	sort.Strings(names)
 	for _, name := range names {
-		ext := path.Ext(name)
-		check, ok := assetTypes[ext]
-		if !ok {
-			return fmt.Errorf("package: %s: not an allowed asset type", name)
-		}
-		if !check(p.Files[name]) {
-			return fmt.Errorf("package: %s: content does not match its extension", name)
+		if err := checkAsset(name, p.Files[name]); err != nil {
+			return err
 		}
 	}
 	return nil
