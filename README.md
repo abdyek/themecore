@@ -14,6 +14,18 @@ go get github.com/umono-cms/themecore
 
 All configuration files of the theme system (`theme.toml`, `built.toml`, `contract.toml` and `attributes.toml`) are TOML v1.0.0 and UTF-8. Syntax added by newer TOML versions is rejected, and so are keys that a schema does not define.
 
+The syntax that TOML v1.1.0 adds is rejected by a scan before decoding, whatever version of the TOML decoder the binary is built with: a newline or a trailing comma in an inline table, the escapes `\e` and `\xHH`, and a time or date-time without seconds. A program that builds `themecore` in calls `TOMLConformance` in its tests:
+
+```go
+func TestTOMLConformance(t *testing.T) {
+	if err := themecore.TOMLConformance(); err != nil {
+		t.Fatal(err)
+	}
+}
+```
+
+It returns an error if the decoder accepts a document that is not TOML v1.0.0 or rejects one that is. Go's version selection cannot cap the version of a dependency, so the decoder in a binary may be newer than the one `themecore` is tested with.
+
 Each file has a `schema` key. It is required and must be a schema URL that `themecore` reads for that file, for example `https://umono.dev/schemas/theme-manifest/v1` for `theme.toml`. An unknown URL is rejected, not ignored.
 
 Text fields are single line, without control characters and without leading or trailing whitespace.
