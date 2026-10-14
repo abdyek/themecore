@@ -22,15 +22,7 @@ func contractFacts(p Package) (sources []contractSource, defined map[string]bool
 		return nil, nil, false
 	}
 	sources = analyzeContract(c)
-	defined = map[string]bool{}
-	for _, comp := range c.Components {
-		defined[comp.Name] = true
-	}
-	for _, s := range sources {
-		for _, local := range s.analysis.Locals {
-			defined[local.Name] = true
-		}
-	}
+	defined = contractDefinedNames(c, sources)
 	return sources, defined, true
 }
 

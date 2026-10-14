@@ -1,0 +1,14 @@
+schema = "https://umono.dev/schemas/theme-attributes/v1"
+
+[address."post"]
+class = "layout-post"
+
+[address."post IMAGE"]
+class = "cover w-1/2 bg-[#fff]"
+sizes = "(min-width: 48rem) 33vw, 100vw"
+
+[address."post MAIN_MENU LINK"]
+class = "main-menu-link"
+
+[address."post POST_BODY IMAGE"]
+sizes = "100vw"

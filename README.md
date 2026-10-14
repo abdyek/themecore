@@ -140,6 +140,24 @@ if errors.Is(err, themecore.ErrOutdated) {
 }
 ```
 
+## `attributes.toml`
+
+`CompileAttributes` validates `attributes.toml` under the schema `https://umono.dev/schemas/theme-attributes/v1` against the package's contract and compiles it into a table that rendering reads without touching files:
+
+```go
+table, err := themecore.CompileAttributes(b, contract)
+
+table.Root("post") // attributes of <umono-root> for the layout post
+
+compono.WithAttributeHook(func(builtin string, chain []compono.Frame) map[string]string {
+	return table.Lookup(layout, builtin, chain)
+})
+```
+
+- An address is `layout`, `layout BUILTIN` or `layout COMPONENT BUILTIN`, with parts separated by a single space. The layout is a layout of the contract, the component is an exposed one and the built-in is a name of `Builtins`. A name the contract defines as a component is never a built-in. `layout COMPONENT` is rejected: an exposed component has no element of its own to write to.
+- Only `class` and `sizes` are allowed. `class` is a list of unique printable ASCII tokens separated by single spaces, without the `umono-` and `compono-` prefixes (case-insensitive), of at most 1024 bytes. `sizes` is allowed only on an address that ends with `IMAGE` and is an HTML source size list without `auto`. Its media conditions use the media feature vocabulary of the theme CSS, its sizes are lengths in its units or `calc()`, `min()`, `max()` and `clamp()` of them, and percentages are rejected.
+- `Lookup` finds the scope from the frame chain: the innermost global frame whose scope path is `[UMONO_LAYOUT]` and whose name is an exposed component, otherwise the layout. A local frame, or a site global with the name of an exposed component, is not a scope. `Root` and `Lookup` return a new map on every call, or `nil` when no address matches.
+
 ## Theme CSS
 
 `Transform` turns the theme author's `assets/theme.css` into the canonical CSS that goes into the package; `Verify` checks the canonical CSS of a package:
