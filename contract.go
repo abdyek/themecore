@@ -30,9 +30,10 @@ type Component struct {
 	Expose bool   `toml:"expose"`
 }
 
-// ParseContract parses and validates contract.toml. Only the structural layer
-// is checked: types, required keys, grammars and uniqueness. The sources are
-// not parsed with Compono yet.
+// ParseContract parses and validates contract.toml: the structural layer
+// (types, required keys, grammars and uniqueness), then the sources, which
+// are parsed with Compono. A source with a grammar error is rejected with an
+// error that wraps ErrOutdated.
 func ParseContract(b []byte) (Contract, error) {
 	const file = "contract.toml"
 	doc, err := readSchema(file, b, schemaContractV1)
@@ -137,6 +138,9 @@ func ParseContract(b []byte) (Contract, error) {
 				return Contract{}, err
 			}
 		}
+	}
+	if err := checkContractSyntax(analyzeContract(c)); err != nil {
+		return Contract{}, err
 	}
 	return c, nil
 }

@@ -120,7 +120,7 @@ err = b.CheckInstallDir("themes/acme/minimal/0.1.0")
 
 ## `contract.toml`
 
-`ParseContract` parses and validates `contract.toml` under the schema `https://umono.dev/schemas/theme-contract/v1`. Only the structural layer is checked for now; the sources are not parsed with Compono yet.
+`ParseContract` parses and validates `contract.toml` under the schema `https://umono.dev/schemas/theme-contract/v1`: first the structural layer below, then the sources, which are parsed with Compono (`compono.Analyze`).
 
 | Key | Required | Rule |
 | --- | --- | --- |
@@ -131,6 +131,14 @@ err = b.CheckInstallDir("themes/acme/minimal/0.1.0")
 | `components` | No | `[[components]]` with a unique `SCREAMING_SNAKE_CASE` `name`, a non-empty `source` and an optional boolean `expose` |
 
 Sources are the only multi-line text fields.
+
+A source with a grammar error that does not depend on values (`invalid-expression`, `unclosed-expression` or `invalid-parameter-definition`), also in a local that is never called, cannot be parsed and is rejected. A published contract never has one, so the error means that the program is older than the contract. It wraps `ErrOutdated`, and CLI and Umono report that they are out of date:
+
+```go
+if errors.Is(err, themecore.ErrOutdated) {
+	// "CLI is out of date" or "Umono is out of date"
+}
+```
 
 ## Theme CSS
 
