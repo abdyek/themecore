@@ -181,7 +181,7 @@ The author grammar is closed:
 
 `FallbackSource` returns the fallback theme, the default look of pages without an active theme, in the author grammar; `FallbackCSS` returns its canonical CSS. `FallbackSource` is also the starting `assets/theme.css` of a new theme.
 
-`Lint` returns warnings for CSS that is valid but never matches, for development tools only. It reports root classes used without `:scope`: a class given only to layout addresses in `attributes.toml` is only on `<umono-root>`, so `.layout-post h1` never matches; write `:scope.layout-post h1`.
+`Lint` returns warnings for CSS that is valid but never matches, for development tools only. It reports root classes used without `:scope`: a class given only to layout addresses in `attributes.toml` is only on `<umono-root>`, so `.layout-post h1` never matches; write `:scope.layout-post h1`. It also reports addresses whose component the layout never renders: `post-list MAIN_MENU LINK` never matches when `MAIN_MENU` cannot be reached from the source of `post-list` through calls, values and defaults of the contract sources.
 
 ## Theme API
 
