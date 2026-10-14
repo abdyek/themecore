@@ -183,6 +183,15 @@ floor, evidence, err := themecore.DetectFeatureFloor(p)
 
 Each `Signal` names a feature, the version that introduced it and the first place in the package that shows it.
 
+The built-ins and Markdown elements open to themes are rows too (`compono.builtin.*`, `compono.markdown.*`), and the sets derive from them:
+
+```go
+themecore.Builtins()         // "LINK", "IMAGE", "NAV", …
+themecore.MarkdownElements() // "heading", "p", "br", …
+```
+
+Address validation, the detectors and the undefined call rule look only at these sets, not at Compono's lists, so a built-in Compono adds stays closed to themes until its row is added. A built-in detector looks for a reference in `contract.toml` that resolves to the built-in (a call, a value or a default) and for an address of `attributes.toml` whose type filter is it. A name the contract defines as a component, in `[[components]]` or as a local, is never a built-in. A Markdown detector looks for the element in `contract.toml`. The place of a signal in `contract.toml` is the key of the source and the line in it, such as `contract.toml:layouts[0].source:4`.
+
 ## License
 
 MIT
