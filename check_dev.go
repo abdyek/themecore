@@ -10,7 +10,13 @@ import (
 // DevResult is the outcome of CheckDev. The errors of one check are
 // returned here and do not stop dev mode; Umono handles each on its own.
 type DevResult struct {
-	Contract Contract
+	// Built is the built.toml CheckDev validated, with the id dev/dev,
+	// which ParseBuilt rejects.
+	Built Built
+	// ContractSource is the unchanged bytes of contract.toml. Umono adds
+	// its contract record from it.
+	ContractSource []byte
+	Contract       Contract
 	// Floor is DetectFeatureFloor of the dev package.
 	Floor    int
 	Evidence []Signal
@@ -58,7 +64,7 @@ func CheckDev(dir, root string) (DevResult, error) {
 		return DevResult{}, err
 	}
 
-	r := DevResult{Contract: c}
+	r := DevResult{Built: built, ContractSource: p.Files["contract.toml"], Contract: c}
 	for _, name := range slices.Sorted(maps.Keys(p.Files)) {
 		if !strings.HasPrefix(name, "assets/") || name == themeCSS {
 			continue

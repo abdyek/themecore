@@ -1,6 +1,7 @@
 package themecore
 
 import (
+	"bytes"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -84,6 +85,33 @@ func TestCheckDev(t *testing.T) {
 	}
 	if len(r.AssetErrs) != 0 {
 		t.Errorf("AssetErrs = %v, want none", r.AssetErrs)
+	}
+}
+
+func TestCheckDevReturnsBuiltAndContractSource(t *testing.T) {
+	dir, root := writeDevDirs(t, nil)
+	r, err := CheckDev(dir, root)
+	if err != nil {
+		t.Fatalf("CheckDev: %v", err)
+	}
+	if r.Built.ID != "dev/dev" {
+		t.Errorf("Built.ID = %q, want %q", r.Built.ID, "dev/dev")
+	}
+	if r.Built.Version != "0.0.0" {
+		t.Errorf("Built.Version = %q, want %q", r.Built.Version, "0.0.0")
+	}
+	if r.Built.Contract != "example/blog@v1.0" {
+		t.Errorf("Built.Contract = %q, want %q", r.Built.Contract, "example/blog@v1.0")
+	}
+	if r.Built.ThemeAPIVersion != 1 {
+		t.Errorf("Built.ThemeAPIVersion = %d, want 1", r.Built.ThemeAPIVersion)
+	}
+	want, err := os.ReadFile("testdata/package/contract.toml")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(r.ContractSource, want) {
+		t.Errorf("ContractSource = %q, want the bytes of contract.toml", r.ContractSource)
 	}
 }
 

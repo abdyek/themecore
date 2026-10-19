@@ -95,6 +95,8 @@ result, err := themecore.CheckDev(dir, root) // on every request; nothing is cac
 
 It runs the checks of `CheckPackage` with the privileges of `dev/dev`: there is no `checksums.json`; `assets/`, `attributes.toml` and `contract.toml` may be symlinks that resolve inside `root`; `assets/theme.css` goes through `Transform` instead of `Verify`; `built.toml` has the id `dev/dev` and the version `0.0.0`, which `ParseBuilt` and `CheckPackage` reject. The package limits and content, `built.toml`, `contract.toml`, `LICENSE` and the feature floor are fatal. Errors of `theme.css`, `attributes.toml` and single assets are returned in the result instead, so dev mode goes on: `CSSErr`, `AttributesErr` and `AssetErrs`.
 
+The result also holds `Built`, the validated `built.toml`, and `ContractSource`, the unchanged bytes of `contract.toml`. Umono checks the Theme API range from `Built` and adds the contract record from `ContractSource` instead of reading the files itself: only `CheckDev` accepts `dev/dev` and resolves the symlinks inside `root`. Both are empty on a fatal error.
+
 ## `checksums.json`
 
 `Checksums` returns the content of `checksums.json` during build; `VerifyChecksums` checks a package against it during install and activation:
