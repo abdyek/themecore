@@ -208,7 +208,7 @@ Build returns warnings for CSS that is valid but never matches, for development 
 
 ## Theme API
 
-The capability ledger (`Features` and `Breaks`) is the single source of the Theme API versions. Rows are only appended.
+The capability ledger inside `themecore` is the single source of the Theme API versions. It has feature rows, each with the version that introduced it and a detector, and break rows for narrowings. Rows are only appended, and the ledger cannot be changed from outside: it shows only through the Theme API versions and the detection results.
 
 ```go
 themecore.ThemeAPICurrent() // newest Theme API version
