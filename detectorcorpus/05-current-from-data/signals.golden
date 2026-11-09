@@ -1,0 +1,2 @@
+compono.builtin.link contract.toml:components[0].source:2
+compono.builtin.list contract.toml:layouts[0].source:2

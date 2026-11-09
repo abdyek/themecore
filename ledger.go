@@ -71,6 +71,7 @@ var featureRows = []featureRow{
 	{ID: "compono.markdown.blockquote", IntroducedIn: 1, Detect: detectMarkdown("blockquote")},
 	{ID: "compono.markdown.hr", IntroducedIn: 1, Detect: detectMarkdown("hr")},
 	{ID: "compono.markdown.table", IntroducedIn: 1, Detect: detectMarkdown("table")},
+	{ID: "compono.link.current-auto", IntroducedIn: 2, Detect: detectDirective("LINK", "current", "__auto")},
 }
 
 // breakRows are the break rows of the ledger.

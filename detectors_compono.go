@@ -78,3 +78,25 @@ func detectMarkdown(name string) detectorFunc {
 		return "", false
 	}
 }
+
+// detectDirective returns a detector for the directive value given as a
+// literal to the parameter param of the built-in name: the first source of
+// contract.toml that has it. Compono does not report where a directive is
+// in its source, so the place is the key of the source. A name the
+// contract defines as a component never resolves to the built-in.
+func detectDirective(name, param, value string) detectorFunc {
+	return func(p Package) (string, bool) {
+		sources, defined, ok := contractFacts(p)
+		if !ok || defined[name] {
+			return "", false
+		}
+		for _, s := range sources {
+			for _, d := range s.analysis.Directives {
+				if d.Builtin == name && d.Param == param && d.Value == value {
+					return "contract.toml:" + s.key, true
+				}
+			}
+		}
+		return "", false
+	}
+}

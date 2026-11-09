@@ -159,6 +159,8 @@ The built-ins and Markdown elements open to themes are rows too (`compono.builti
 
 A built-in detector looks for a reference in `contract.toml` that resolves to the built-in (a call, a value or a default) and for an address of `attributes.toml` whose type filter is it. A name the contract defines as a component, in `[[components]]` or as a local, is never a built-in. A Markdown detector looks for the element in `contract.toml`. The place of a signal in `contract.toml` is the key of the source and the line in it, such as `contract.toml:layouts[0].source:4`.
 
+Theme API 2 adds `__auto` for the `current` of `LINK` (`compono.link.current-auto`): the application marks the active page instead of the contract. Only `__auto` written in `contract.toml` raises the floor to 2; a value from page data, a parameter or a record leaves the output the theme sees unchanged and is not detected, so a theme that does not write it still declares 1. Compono does not report the line of a directive, so the place of this signal is the key of the source only, such as `contract.toml:layouts[0].source`.
+
 ## Tests of an Embedding Program
 
 Go's version selection cannot cap the version of a dependency, so a program that builds `themecore` in may have a newer TOML decoder or a newer Compono than the ones `themecore` is tested with. Three checks run with the dependencies of the program, and the program runs them in its tests:

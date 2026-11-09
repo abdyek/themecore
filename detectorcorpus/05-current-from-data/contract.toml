@@ -1,0 +1,17 @@
+schema = "https://umono.dev/schemas/theme-contract/v1"
+id = "corpus/current-from-data"
+version = "v1.0"
+
+[[layouts]]
+id = "post"
+source = '''
+~ menu = []
+{{ LIST items = menu item = ITEM }}
+'''
+
+[[components]]
+name = "ITEM"
+source = '''
+~ item = {}
+{{ LINK text = item.text url = item.url current = item.current }}
+'''
