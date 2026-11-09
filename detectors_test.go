@@ -360,7 +360,7 @@ func TestCSSDetectors(t *testing.T) {
 }
 
 func TestDetectFeatureFloorUnreadableCSS(t *testing.T) {
-	_, _, err := DetectFeatureFloor(Package{Files: map[string][]byte{"assets/theme.css": []byte("a{")}})
+	_, _, err := detectFeatureFloor(Package{Files: map[string][]byte{"assets/theme.css": []byte("a{")}})
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}

@@ -7,18 +7,18 @@ import (
 )
 
 func TestFallbackCSSVerifies(t *testing.T) {
-	if err := Verify(FallbackCSS()); err != nil {
-		t.Fatalf("Verify(FallbackCSS()) = %v, want nil", err)
+	if err := verify(FallbackCSS()); err != nil {
+		t.Fatalf("verify(FallbackCSS()) = %v, want nil", err)
 	}
 }
 
 func TestFallbackSourceTransforms(t *testing.T) {
-	out, err := Transform(FallbackSource())
+	out, err := transform(FallbackSource())
 	if err != nil {
-		t.Fatalf("Transform(FallbackSource()) error = %v", err)
+		t.Fatalf("transform(FallbackSource()) error = %v", err)
 	}
 	if !bytes.Equal(out, FallbackCSS()) {
-		t.Fatalf("Transform(FallbackSource()) = %q, want %q", out, FallbackCSS())
+		t.Fatalf("transform(FallbackSource()) = %q, want %q", out, FallbackCSS())
 	}
 }
 

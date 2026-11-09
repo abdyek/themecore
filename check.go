@@ -8,7 +8,8 @@ type Result struct {
 	// Attributes is the compiled attributes.toml, an empty table if the
 	// package has none.
 	Attributes AttributeTable
-	// Floor is DetectFeatureFloor of the package.
+	// Floor is the largest version of the features the package uses, 0 if
+	// it uses none. Evidence holds one signal per feature it uses.
 	Floor    int
 	Evidence []Signal
 }
@@ -19,11 +20,11 @@ var requiredPackageFiles = []string{"built.toml", "contract.toml", "checksums.js
 // CheckPackage runs the checks of install and activation on p, a package read
 // with ReadZip or ReadDir, which check the package limits and content. The
 // order is that of the static check table: the required files, built.toml,
-// contract.toml and its match with built.toml, the assets, Verify of the
-// canonical CSS, the files its URLs point to, attributes.toml against the
-// contract, LICENSE and, last, the feature floor: a theme-api-version lower
-// than the features the package uses is rejected. checksums.json and the
-// Theme API range are checked by the caller before.
+// contract.toml and its match with built.toml, the assets, the canonical
+// grammar of the CSS, the files its URLs point to, attributes.toml against
+// the contract, LICENSE and, last, the feature floor: a theme-api-version
+// lower than the features the package uses is rejected. checksums.json and
+// the Theme API range are checked by the caller before.
 func CheckPackage(p Package) (Result, error) {
 	for _, name := range requiredPackageFiles {
 		if _, ok := p.Files[name]; !ok {
@@ -44,7 +45,7 @@ func CheckPackage(p Package) (Result, error) {
 	if err := checkAssets(p); err != nil {
 		return Result{}, err
 	}
-	if err := Verify(p.Files[themeCSS]); err != nil {
+	if err := verify(p.Files[themeCSS]); err != nil {
 		return Result{}, err
 	}
 	if err := checkAssetURLs(p); err != nil {
@@ -59,7 +60,7 @@ func CheckPackage(p Package) (Result, error) {
 	if err := checkLicense(p); err != nil {
 		return Result{}, err
 	}
-	floor, evidence, err := DetectFeatureFloor(p)
+	floor, evidence, err := detectFeatureFloor(p)
 	if err != nil {
 		return Result{}, err
 	}
@@ -71,11 +72,14 @@ func CheckPackage(p Package) (Result, error) {
 
 // BuildReport is the outcome of CheckSource.
 type BuildReport struct {
-	// Version is theme-api-version, from DetectThemeAPIVersion. The CLI
-	// writes it to built.toml.
+	// Version is theme-api-version: the larger of the version of the
+	// features the package uses and ThemeAPIMin. The CLI writes it to
+	// built.toml. Evidence holds one signal per feature the package uses.
 	Version  int
 	Evidence []Signal
-	// Warnings are those of Lint. They do not stop the build.
+	// Warnings are mistakes that are valid CSS but never match: root
+	// classes used without :scope and addresses whose component the layout
+	// never renders. They do not stop the build.
 	Warnings []Warning
 }
 
@@ -83,10 +87,11 @@ type BuildReport struct {
 // development directory dir. contract is the file of the contract that
 // theme.toml refers to, from the CLI's cache; themecore does not know the
 // cache layout. The order is that of the static check table: the package
-// limits and content, theme.toml, contract.toml, the assets, Transform, the
-// files the CSS URLs point to, attributes.toml against the contract and
-// LICENSE. The returned package is what goes into the built file, the
-// canonical CSS included; the CLI adds built.toml and then checksums.json.
+// limits and content, theme.toml, contract.toml, the assets, the CSS turned
+// into the canonical CSS, the files the CSS URLs point to, attributes.toml
+// against the contract and LICENSE. The returned package is what goes into
+// the built file, the canonical CSS included; the CLI adds built.toml and
+// then checksums.json.
 func CheckSource(dir string, contract []byte) (Package, BuildReport, error) {
 	p, manifest, err := readSource(dir, contract)
 	if err != nil {
@@ -102,7 +107,7 @@ func CheckSource(dir string, contract []byte) (Package, BuildReport, error) {
 	if err := checkAssets(p); err != nil {
 		return Package{}, BuildReport{}, err
 	}
-	canonical, err := Transform(p.Files[themeCSS])
+	canonical, err := transform(p.Files[themeCSS])
 	if err != nil {
 		return Package{}, BuildReport{}, err
 	}
@@ -118,9 +123,9 @@ func CheckSource(dir string, contract []byte) (Package, BuildReport, error) {
 	if err := checkLicense(p); err != nil {
 		return Package{}, BuildReport{}, err
 	}
-	version, evidence, err := DetectThemeAPIVersion(p)
+	version, evidence, err := detectThemeAPIVersion(p)
 	if err != nil {
 		return Package{}, BuildReport{}, err
 	}
-	return p, BuildReport{Version: version, Evidence: evidence, Warnings: Lint(p)}, nil
+	return p, BuildReport{Version: version, Evidence: evidence, Warnings: lint(p)}, nil
 }

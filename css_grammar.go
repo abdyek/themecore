@@ -22,7 +22,7 @@ const (
 )
 
 // checkGrammar checks the structure of a stylesheet: the author grammar of
-// Transform's input (themecore, Karar 5), or with canonical set, the
+// transform's input (themecore, Karar 5), or with canonical set, the
 // canonical grammar of the package's CSS (Karar 9). The two differ only in
 // where style rules and @scope may appear.
 func checkGrammar(rules []cssRule, canonical bool) error {

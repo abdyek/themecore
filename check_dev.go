@@ -17,10 +17,12 @@ type DevResult struct {
 	// its contract record from it.
 	ContractSource []byte
 	Contract       Contract
-	// Floor is DetectFeatureFloor of the dev package.
+	// Floor is the largest version of the features the dev package uses,
+	// 0 if it uses none. Evidence holds one signal per feature it uses.
 	Floor    int
 	Evidence []Signal
-	// CSS is the Transform output of assets/theme.css, nil if CSSErr is set.
+	// CSS is the canonical CSS of assets/theme.css, as build makes it, nil
+	// if CSSErr is set.
 	// Umono answers the theme.css request with an error status then.
 	CSS    []byte
 	CSSErr error
@@ -37,11 +39,12 @@ type DevResult struct {
 // Umono's dev mode, themes/dev/dev/0.0.0/, with the privileges of dev/dev,
 // which exist only here. root is the theme project, UMONO_THEME_DEV. There
 // is no checksums.json; assets/, attributes.toml and contract.toml may be
-// symlinks into root; theme.css goes through Transform instead of Verify;
-// built.toml has the id dev/dev and the version 0.0.0. The other checks run
-// as in CheckPackage. The package limits and content, built.toml,
-// contract.toml, LICENSE and the feature floor are fatal: the returned
-// error. CheckDev keeps no cache; Umono calls it on every request.
+// symlinks into root; theme.css is turned into the canonical CSS as in
+// build, instead of being checked as canonical CSS; built.toml has the id
+// dev/dev and the version 0.0.0. The other checks run as in CheckPackage.
+// The package limits and content, built.toml, contract.toml, LICENSE and
+// the feature floor are fatal: the returned error. CheckDev keeps no cache;
+// Umono calls it on every request.
 func CheckDev(dir, root string) (DevResult, error) {
 	p, assetErrs, err := readDev(dir, root)
 	if err != nil {
@@ -81,7 +84,7 @@ func CheckDev(dir, root string) (DevResult, error) {
 
 	if src, ok := p.Files[themeCSS]; !ok {
 		r.CSSErr = fmt.Errorf("package: %s: missing", themeCSS)
-	} else if css, err := Transform(src); err != nil {
+	} else if css, err := transform(src); err != nil {
 		r.CSSErr = err
 		delete(p.Files, themeCSS)
 	} else {
@@ -102,7 +105,7 @@ func CheckDev(dir, root string) (DevResult, error) {
 	if err := checkLicense(p); err != nil {
 		return DevResult{}, err
 	}
-	floor, evidence, err := DetectFeatureFloor(p)
+	floor, evidence, err := detectFeatureFloor(p)
 	if err != nil {
 		return DevResult{}, err
 	}

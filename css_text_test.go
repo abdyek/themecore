@@ -29,8 +29,8 @@ func TestGeneratedTextAccepted(t *testing.T) {
 	}
 	for i, css := range cases {
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
-			if _, err := Transform([]byte(css)); err != nil {
-				t.Fatalf("Transform(%q) error = %v, want nil", css, err)
+			if _, err := transform([]byte(css)); err != nil {
+				t.Fatalf("transform(%q) error = %v, want nil", css, err)
 			}
 		})
 	}
@@ -58,12 +58,12 @@ func TestGeneratedTextRejected(t *testing.T) {
 	}
 	for i, tt := range tests {
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
-			_, err := Transform([]byte(tt.css))
+			_, err := transform([]byte(tt.css))
 			if err == nil {
-				t.Fatalf("Transform(%q) error = nil, want error containing %q", tt.css, tt.want)
+				t.Fatalf("transform(%q) error = nil, want error containing %q", tt.css, tt.want)
 			}
 			if !strings.Contains(err.Error(), tt.want) {
-				t.Fatalf("Transform(%q) error = %v, want error containing %q", tt.css, err, tt.want)
+				t.Fatalf("transform(%q) error = %v, want error containing %q", tt.css, err, tt.want)
 			}
 		})
 	}
@@ -72,7 +72,7 @@ func TestGeneratedTextRejected(t *testing.T) {
 func TestGeneratedTextVerify(t *testing.T) {
 	css := `@scope (umono-root){a::before{content:"x" / ""}}`
 	want := "strings in content must not contain letters"
-	if err := Verify([]byte(css)); err == nil || !strings.Contains(err.Error(), want) {
-		t.Fatalf("Verify(%q) error = %v, want error containing %q", css, err, want)
+	if err := verify([]byte(css)); err == nil || !strings.Contains(err.Error(), want) {
+		t.Fatalf("verify(%q) error = %v, want error containing %q", css, err, want)
 	}
 }
