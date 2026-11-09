@@ -106,7 +106,7 @@ func TestDetectFeatures(t *testing.T) {
 		return func(Package) (string, bool) { return where, true }
 	}
 	never := func(Package) (string, bool) { return "", false }
-	features := []Feature{
+	features := []featureRow{
 		{ID: "a.one", IntroducedIn: 1, Detect: always("x")},
 		{ID: "a.three", IntroducedIn: 3, Detect: always("y")},
 		{ID: "a.two", IntroducedIn: 2, Detect: never},

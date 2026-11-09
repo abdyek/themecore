@@ -32,13 +32,13 @@ func TestThemeAPIArithmetic(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			features := make([]Feature, len(tt.introduced))
+			features := make([]featureRow, len(tt.introduced))
 			for i, v := range tt.introduced {
-				features[i] = Feature{IntroducedIn: v}
+				features[i] = featureRow{IntroducedIn: v}
 			}
-			breaks := make([]Break, len(tt.at))
+			breaks := make([]breakRow, len(tt.at))
 			for i, v := range tt.at {
-				breaks[i] = Break{At: v}
+				breaks[i] = breakRow{At: v}
 			}
 			if got := themeAPICurrent(features, breaks); got != tt.current {
 				t.Errorf("themeAPICurrent = %d, want %d", got, tt.current)
@@ -52,34 +52,34 @@ func TestThemeAPIArithmetic(t *testing.T) {
 
 func TestLedgerInvariants(t *testing.T) {
 	seen := make(map[string]int)
-	for i, f := range Features {
+	for i, f := range featureRows {
 		if !ledgerIDPattern.MatchString(f.ID) {
-			t.Errorf("Features[%d] ID %q does not match pattern %q", i, f.ID, ledgerIDPattern.String())
+			t.Errorf("featureRows[%d] ID %q does not match pattern %q", i, f.ID, ledgerIDPattern.String())
 		}
 		if prev, dup := seen[f.ID]; dup {
-			t.Errorf("Features[%d] ID %q duplicates Features[%d]", i, f.ID, prev)
+			t.Errorf("featureRows[%d] ID %q duplicates featureRows[%d]", i, f.ID, prev)
 		}
 		seen[f.ID] = i
 		if f.Detect == nil {
-			t.Errorf("Features[%d] ID %q has nil Detect", i, f.ID)
+			t.Errorf("featureRows[%d] ID %q has nil Detect", i, f.ID)
 		}
 		cur := ThemeAPICurrent()
 		if f.IntroducedIn < 1 || f.IntroducedIn > cur {
-			t.Errorf("Features[%d] ID %q IntroducedIn=%d not in [1,%d]", i, f.ID, f.IntroducedIn, cur)
+			t.Errorf("featureRows[%d] ID %q IntroducedIn=%d not in [1,%d]", i, f.ID, f.IntroducedIn, cur)
 		}
 	}
-	if len(Breaks) == 0 {
-		t.Errorf("Breaks is empty; expected at least {At:1, Reason:%q}", "First Theme API version")
+	if len(breakRows) == 0 {
+		t.Errorf("breakRows is empty; expected at least {At:1, Reason:%q}", "First Theme API version")
 		return
 	}
-	if Breaks[0].At != 1 || Breaks[0].Reason != "First Theme API version" {
-		t.Errorf("Breaks[0] = {At:%d, Reason:%q}; want {At:1, Reason:%q}",
-			Breaks[0].At, Breaks[0].Reason, "First Theme API version")
+	if breakRows[0].At != 1 || breakRows[0].Reason != "First Theme API version" {
+		t.Errorf("breakRows[0] = {At:%d, Reason:%q}; want {At:1, Reason:%q}",
+			breakRows[0].At, breakRows[0].Reason, "First Theme API version")
 	}
-	for i := 1; i < len(Breaks); i++ {
-		if Breaks[i].At <= Breaks[i-1].At {
-			t.Errorf("Breaks[%d].At=%d not strictly greater than Breaks[%d].At=%d",
-				i, Breaks[i].At, i-1, Breaks[i-1].At)
+	for i := 1; i < len(breakRows); i++ {
+		if breakRows[i].At <= breakRows[i-1].At {
+			t.Errorf("breakRows[%d].At=%d not strictly greater than breakRows[%d].At=%d",
+				i, breakRows[i].At, i-1, breakRows[i-1].At)
 		}
 	}
 }

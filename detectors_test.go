@@ -5,15 +5,15 @@ import (
 	"testing"
 )
 
-func feature(t *testing.T, id string) Feature {
+func feature(t *testing.T, id string) featureRow {
 	t.Helper()
-	for _, f := range Features {
+	for _, f := range featureRows {
 		if f.ID == id {
 			return f
 		}
 	}
 	t.Fatalf("feature %q not found", id)
-	return Feature{}
+	return featureRow{}
 }
 
 const attrsDoc = `schema = "https://umono.dev/schemas/theme-attributes/v1"
@@ -49,15 +49,15 @@ func TestLedgerPackageRows(t *testing.T) {
 		"assets.avif",
 		"assets.gif",
 	}
-	if len(Features) < len(want) {
-		t.Fatalf("expected at least %d features, got %d", len(want), len(Features))
+	if len(featureRows) < len(want) {
+		t.Fatalf("expected at least %d features, got %d", len(want), len(featureRows))
 	}
 	for i, id := range want {
-		if Features[i].ID != id {
-			t.Errorf("Features[%d].ID = %q, want %q", i, Features[i].ID, id)
+		if featureRows[i].ID != id {
+			t.Errorf("featureRows[%d].ID = %q, want %q", i, featureRows[i].ID, id)
 		}
-		if Features[i].IntroducedIn != 1 {
-			t.Errorf("Features[%d] %q IntroducedIn = %d, want 1", i, id, Features[i].IntroducedIn)
+		if featureRows[i].IntroducedIn != 1 {
+			t.Errorf("featureRows[%d] %q IntroducedIn = %d, want 1", i, id, featureRows[i].IntroducedIn)
 		}
 	}
 }
@@ -261,16 +261,16 @@ func TestLedgerCSSRows(t *testing.T) {
 		"css.at.font-face",
 		"css.at.keyframes",
 	}
-	if len(Features) < 20 {
-		t.Fatalf("expected at least 20 features, got %d", len(Features))
+	if len(featureRows) < 20 {
+		t.Fatalf("expected at least 20 features, got %d", len(featureRows))
 	}
 	for i, id := range want {
 		j := 15 + i
-		if Features[j].ID != id {
-			t.Errorf("Features[%d].ID = %q, want %q", j, Features[j].ID, id)
+		if featureRows[j].ID != id {
+			t.Errorf("featureRows[%d].ID = %q, want %q", j, featureRows[j].ID, id)
 		}
-		if Features[j].IntroducedIn != 1 {
-			t.Errorf("Features[%d] %q IntroducedIn = %d, want 1", j, id, Features[j].IntroducedIn)
+		if featureRows[j].IntroducedIn != 1 {
+			t.Errorf("featureRows[%d] %q IntroducedIn = %d, want 1", j, id, featureRows[j].IntroducedIn)
 		}
 	}
 }
