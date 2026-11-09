@@ -11,11 +11,11 @@ type Signal struct {
 	Where        string // "assets/icons/cart.svg"
 }
 
-// DetectFeatureFloor is the first term of theme-api-version: the largest
+// detectFeatureFloor is the first term of theme-api-version: the largest
 // IntroducedIn of the features the package uses, or 0 if it uses none.
 // evidence has one signal per detected feature, in ledger order. Install and
 // activation call it to verify the version that built.toml declares.
-func DetectFeatureFloor(p Package) (floor int, evidence []Signal, err error) {
+func detectFeatureFloor(p Package) (floor int, evidence []Signal, err error) {
 	if b, ok := p.Files["attributes.toml"]; ok {
 		if _, err := decodeAddresses(b); err != nil {
 			return 0, nil, fmt.Errorf("attributes.toml: cannot be read for feature detection: %w", err)
@@ -36,11 +36,11 @@ func DetectFeatureFloor(p Package) (floor int, evidence []Signal, err error) {
 	return floor, evidence, nil
 }
 
-// DetectThemeAPIVersion is theme-api-version: the larger of
-// DetectFeatureFloor and ThemeAPIMin. evidence is DetectFeatureFloor's. Build
+// detectThemeAPIVersion is theme-api-version: the larger of
+// detectFeatureFloor and ThemeAPIMin. evidence is detectFeatureFloor's. Build
 // calls it to declare the version.
-func DetectThemeAPIVersion(p Package) (version int, evidence []Signal, err error) {
-	floor, evidence, err := DetectFeatureFloor(p)
+func detectThemeAPIVersion(p Package) (version int, evidence []Signal, err error) {
+	floor, evidence, err := detectFeatureFloor(p)
 	if err != nil {
 		return 0, nil, err
 	}

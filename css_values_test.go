@@ -32,8 +32,8 @@ func TestValuesAccepted(t *testing.T) {
 	}
 	for i, css := range cases {
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
-			if _, err := Transform([]byte(css)); err != nil {
-				t.Fatalf("Transform(%q) returned error: %v", css, err)
+			if _, err := transform([]byte(css)); err != nil {
+				t.Fatalf("transform(%q) returned error: %v", css, err)
 			}
 		})
 	}
@@ -89,12 +89,12 @@ func TestValuesRejected(t *testing.T) {
 	}
 	for i, tc := range cases {
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
-			_, err := Transform([]byte(tc.css))
+			_, err := transform([]byte(tc.css))
 			if err == nil {
-				t.Fatalf("Transform(%q) returned nil error, want containing %q", tc.css, tc.want)
+				t.Fatalf("transform(%q) returned nil error, want containing %q", tc.css, tc.want)
 			}
 			if !strings.Contains(err.Error(), tc.want) {
-				t.Fatalf("Transform(%q) error = %q, want containing %q", tc.css, err.Error(), tc.want)
+				t.Fatalf("transform(%q) error = %q, want containing %q", tc.css, err.Error(), tc.want)
 			}
 		})
 	}
@@ -103,9 +103,9 @@ func TestValuesRejected(t *testing.T) {
 func TestValuesVerify(t *testing.T) {
 	css := []byte(`@scope (umono-root){a{width:env(x)}}`)
 	want := "function env() is not allowed"
-	if err := Verify(css); err == nil {
-		t.Fatalf("Verify(%q) returned nil error, want containing %q", css, want)
+	if err := verify(css); err == nil {
+		t.Fatalf("verify(%q) returned nil error, want containing %q", css, want)
 	} else if !strings.Contains(err.Error(), want) {
-		t.Fatalf("Verify(%q) error = %q, want containing %q", css, err.Error(), want)
+		t.Fatalf("verify(%q) error = %q, want containing %q", css, err.Error(), want)
 	}
 }

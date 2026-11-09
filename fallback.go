@@ -7,10 +7,10 @@ var fallbackSource []byte
 
 var fallbackCSS = mustTransform(fallbackSource)
 
-// mustTransform runs Transform on themecore's own fallback source. A
+// mustTransform runs transform on themecore's own fallback source. A
 // failure is a bug in themecore and is caught by the tests.
 func mustTransform(b []byte) []byte {
-	out, err := Transform(b)
+	out, err := transform(b)
 	if err != nil {
 		panic(err)
 	}
@@ -27,7 +27,7 @@ func FallbackSource() []byte {
 }
 
 // FallbackCSS returns the canonical CSS of the fallback theme: the
-// Transform output of FallbackSource. Umono serves it at
+// canonical CSS that build makes from FallbackSource. Umono serves it at
 // /_theme/fallback-{release}/theme.css.
 func FallbackCSS() []byte {
 	out := make([]byte, len(fallbackCSS))

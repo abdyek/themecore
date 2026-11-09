@@ -6,12 +6,12 @@ import (
 )
 
 func transformMedia(prelude string) error {
-	_, err := Transform([]byte("@media " + prelude + "{a{color:red}}"))
+	_, err := transform([]byte("@media " + prelude + "{a{color:red}}"))
 	return err
 }
 
 func transformSupports(prelude string) error {
-	_, err := Transform([]byte("@supports " + prelude + "{a{color:red}}"))
+	_, err := transform([]byte("@supports " + prelude + "{a{color:red}}"))
 	return err
 }
 
@@ -59,7 +59,7 @@ func TestMediaAccepted(t *testing.T) {
 		})
 	}
 	t.Run("", func(t *testing.T) {
-		_, err := Transform([]byte("@media{a{color:red}}"))
+		_, err := transform([]byte("@media{a{color:red}}"))
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -154,7 +154,7 @@ func TestSupportsRejected(t *testing.T) {
 		})
 	}
 	t.Run("", func(t *testing.T) {
-		_, err := Transform([]byte("@supports{a{color:red}}"))
+		_, err := transform([]byte("@supports{a{color:red}}"))
 		if err == nil {
 			t.Fatalf(`expected error containing "invalid @supports condition", got nil`)
 		}

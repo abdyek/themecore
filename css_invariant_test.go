@@ -6,8 +6,8 @@ import (
 	"testing"
 )
 
-// valid author stylesheets; every one must pass Transform, and every Transform
-// output must pass Verify, themecore Karar 11
+// valid author stylesheets; every one must pass transform, and every transform
+// output must pass verify, themecore Karar 11
 var validStylesheets = []string{
 	`@media (min-width: 48rem) {
   @supports selector(::details-content) {
@@ -32,12 +32,12 @@ h1 { font-family: "acme-inter", sans-serif; }
 func TestTransformOutputsVerify(t *testing.T) {
 	for i, css := range validStylesheets {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
-			out, err := Transform([]byte(css))
+			out, err := transform([]byte(css))
 			if err != nil {
-				t.Fatalf("Transform error: %v", err)
+				t.Fatalf("transform error: %v", err)
 			}
-			if err := Verify(out); err != nil {
-				t.Fatalf("Verify error on transformed output: %v", err)
+			if err := verify(out); err != nil {
+				t.Fatalf("verify error on transformed output: %v", err)
 			}
 		})
 	}
@@ -45,9 +45,9 @@ func TestTransformOutputsVerify(t *testing.T) {
 
 func TestDetailsRecipe(t *testing.T) {
 	src := validStylesheets[0]
-	out, err := Transform([]byte(src))
+	out, err := transform([]byte(src))
 	if err != nil {
-		t.Fatalf("Transform error: %v", err)
+		t.Fatalf("transform error: %v", err)
 	}
 	want := "@media (min-width:48rem){@supports selector(::details-content){@scope (umono-root){nav>details>summary{display:none}nav>details::details-content{content-visibility:visible}}}}\n"
 	if !bytes.Equal(out, []byte(want)) {
@@ -57,11 +57,11 @@ func TestDetailsRecipe(t *testing.T) {
 
 func TestTransformIdempotentShape(t *testing.T) {
 	for i, css := range validStylesheets {
-		first, err := Transform([]byte(css))
+		first, err := transform([]byte(css))
 		if err != nil {
-			t.Fatalf("[%d] first Transform error: %v", i, err)
+			t.Fatalf("[%d] first transform error: %v", i, err)
 		}
-		_, err2 := Transform(first)
+		_, err2 := transform(first)
 		if bytes.Contains(first, []byte("@scope")) {
 			if err2 == nil {
 				t.Fatalf("[%d] expected error containing %q, got nil", i, "@scope is not allowed")

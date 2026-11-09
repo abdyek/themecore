@@ -22,8 +22,8 @@ func TestURLsAccepted(t *testing.T) {
 	}
 	for i, css := range sheets {
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
-			if _, err := Transform([]byte(css)); err != nil {
-				t.Fatalf("Transform: %v", err)
+			if _, err := transform([]byte(css)); err != nil {
+				t.Fatalf("transform: %v", err)
 			}
 		})
 	}
@@ -56,7 +56,7 @@ func TestURLsRejected(t *testing.T) {
 	want := "must be a relative path to a file in assets/"
 	for i, css := range sheets {
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
-			_, err := Transform([]byte(css))
+			_, err := transform([]byte(css))
 			if err == nil {
 				t.Fatalf("expected error, got nil")
 			}
@@ -78,7 +78,7 @@ func TestURLsInvalidForm(t *testing.T) {
 	}
 	for i, css := range sheets {
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
-			_, err := Transform([]byte(css))
+			_, err := transform([]byte(css))
 			if err == nil {
 				t.Fatalf("expected error, got nil")
 			}
@@ -92,7 +92,7 @@ func TestURLsInvalidForm(t *testing.T) {
 func TestURLsVerify(t *testing.T) {
 	css := `@scope (umono-root){a{background:url(/a.png)}}`
 	want := "must be a relative path to a file in assets/"
-	if err := Verify([]byte(css)); err == nil {
+	if err := verify([]byte(css)); err == nil {
 		t.Fatalf("expected error, got nil")
 	} else if !strings.Contains(err.Error(), want) {
 		t.Fatalf("error %q does not contain %q", err.Error(), want)

@@ -54,9 +54,9 @@ func TestCheckPackageWithoutAttributes(t *testing.T) {
 }
 
 func TestCheckPackageRejects(t *testing.T) {
-	missingURL, err := Transform([]byte("a { background: url(missing.png) }"))
+	missingURL, err := transform([]byte("a { background: url(missing.png) }"))
 	if err != nil {
-		t.Fatalf("Transform: %v", err)
+		t.Fatalf("transform: %v", err)
 	}
 	cases := []struct {
 		name   string

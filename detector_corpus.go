@@ -60,7 +60,7 @@ func runDetectorCorpusCase(name string) error {
 	if err != nil {
 		return err
 	}
-	_, evidence, err := DetectFeatureFloor(p)
+	_, evidence, err := detectFeatureFloor(p)
 	if err != nil {
 		return err
 	}

@@ -83,9 +83,9 @@ result, err := themecore.CheckPackage(p) // after VerifyChecksums and the Theme 
 p, report, err := themecore.CheckSource(dir, contract)
 ```
 
-Only `assets/`, `attributes.toml` and `LICENSE` are read from `dir` into the package, with `contract` as `contract.toml`; `theme.toml` is checked but does not go in, and other files such as `.dev/` and `dist/` are not read. An empty directory is skipped, any other file that breaks the package rules stops the build. `assets/theme.css` is replaced by its canonical CSS. The returned package is what goes into the built file; the CLI adds `built.toml` with `report.Version` and then `checksums.json`. `report` also holds the evidence of the version and the `Lint` warnings.
+Only `assets/`, `attributes.toml` and `LICENSE` are read from `dir` into the package, with `contract` as `contract.toml`; `theme.toml` is checked but does not go in, and other files such as `.dev/` and `dist/` are not read. An empty directory is skipped, any other file that breaks the package rules stops the build. `assets/theme.css` is replaced by its canonical CSS. The returned package is what goes into the built file; the CLI adds `built.toml` with `report.Version` and then `checksums.json`. `report` also holds the evidence of the version and warnings for mistakes that are valid CSS but never match (see [Theme CSS](#theme-css)); they do not stop the build.
 
-`CheckPackage` checks that `built.toml`, `contract.toml`, `checksums.json` and `assets/theme.css` exist, parses `built.toml` and `contract.toml` and checks that the contract of `built.toml` is the package's `contract.toml`. Then it checks the assets, `Verify`, the files the CSS URLs point to, `attributes.toml` against the contract and `LICENSE`. Last, it rejects a `theme-api-version` lower than the version of the features the package uses. The `Result` holds the contract, the compiled attribute table (empty without `attributes.toml`) and the feature floor with its evidence.
+`CheckPackage` checks that `built.toml`, `contract.toml`, `checksums.json` and `assets/theme.css` exist, parses `built.toml` and `contract.toml` and checks that the contract of `built.toml` is the package's `contract.toml`. Then it checks the assets, the canonical grammar of `assets/theme.css`, the files the CSS URLs point to, `attributes.toml` against the contract and `LICENSE`. Last, it rejects a `theme-api-version` lower than the version of the features the package uses. The `Result` holds the contract, the compiled attribute table (empty without `attributes.toml`) and the feature floor with its evidence.
 
 `CheckDev` is for Umono's dev mode. `dir` is `themes/dev/dev/0.0.0/` and `root` the theme project (`UMONO_THEME_DEV`):
 
@@ -93,7 +93,7 @@ Only `assets/`, `attributes.toml` and `LICENSE` are read from `dir` into the pac
 result, err := themecore.CheckDev(dir, root) // on every request; nothing is cached
 ```
 
-It runs the checks of `CheckPackage` with the privileges of `dev/dev`: there is no `checksums.json`; `assets/`, `attributes.toml` and `contract.toml` may be symlinks that resolve inside `root`; `assets/theme.css` goes through `Transform` instead of `Verify`; `built.toml` has the id `dev/dev` and the version `0.0.0`, which `ParseBuilt` and `CheckPackage` reject. The package limits and content, `built.toml`, `contract.toml`, `LICENSE` and the feature floor are fatal. Errors of `theme.css`, `attributes.toml` and single assets are returned in the result instead, so dev mode goes on: `CSSErr`, `AttributesErr` and `AssetErrs`.
+It runs the checks of `CheckPackage` with the privileges of `dev/dev`: there is no `checksums.json`; `assets/`, `attributes.toml` and `contract.toml` may be symlinks that resolve inside `root`; `assets/theme.css` is turned into canonical CSS as in build instead of being checked as canonical CSS; `built.toml` has the id `dev/dev` and the version `0.0.0`, which `ParseBuilt` and `CheckPackage` reject. The package limits and content, `built.toml`, `contract.toml`, `LICENSE` and the feature floor are fatal. Errors of `theme.css`, `attributes.toml` and single assets are returned in the result instead, so dev mode goes on: `CSSErr`, `AttributesErr` and `AssetErrs`.
 
 The result also holds `Built`, the validated `built.toml`, and `ContractSource`, the unchanged bytes of `contract.toml`. Umono checks the Theme API range from `Built` and adds the contract record from `ContractSource` instead of reading the files itself: only `CheckDev` accepts `dev/dev` and resolves the symlinks inside `root`. Both are empty on a fatal error.
 
@@ -188,14 +188,9 @@ compono.WithAttributeHook(func(builtin string, chain []compono.Frame) map[string
 
 ## Theme CSS
 
-`Transform` turns the theme author's `assets/theme.css` into the canonical CSS that goes into the package; `Verify` checks the canonical CSS of a package:
+Build (`CheckSource`) turns the theme author's `assets/theme.css` into the canonical CSS that goes into the package; install and activation (`CheckPackage`) check that the CSS of a package is canonical.
 
-```go
-out, err := themecore.Transform(src) // build
-err = themecore.Verify(css)          // install and activation
-```
-
-Every style rule of the canonical CSS is inside an `@scope (umono-root)` block, so the theme cannot style anything outside `<umono-root>`. `Transform` parses strictly and never relies on the browser's error recovery; its output always passes `Verify`. `Verify` checks the grammar, not the bytes.
+Every style rule of the canonical CSS is inside an `@scope (umono-root)` block, so the theme cannot style anything outside `<umono-root>`. The author's CSS is parsed strictly, never relying on the browser's error recovery, and the canonical CSS that build makes always passes the check of install and activation. That check looks at the grammar, not the bytes.
 
 The author grammar is closed:
 
@@ -209,7 +204,7 @@ The author grammar is closed:
 
 `FallbackSource` returns the fallback theme, the default look of pages without an active theme, in the author grammar; `FallbackCSS` returns its canonical CSS. `FallbackSource` is also the starting `assets/theme.css` of a new theme.
 
-`Lint` returns warnings for CSS that is valid but never matches, for development tools only. It reports root classes used without `:scope`: a class given only to layout addresses in `attributes.toml` is only on `<umono-root>`, so `.layout-post h1` never matches; write `:scope.layout-post h1`. It also reports addresses whose component the layout never renders: `post-list MAIN_MENU LINK` never matches when `MAIN_MENU` cannot be reached from the source of `post-list` through calls, values and defaults of the contract sources.
+Build returns warnings for CSS that is valid but never matches, for development tools only; install and activation do not look for them. Build reports root classes used without `:scope`: a class given only to layout addresses in `attributes.toml` is only on `<umono-root>`, so `.layout-post h1` never matches; write `:scope.layout-post h1`. It also reports addresses whose component the layout never renders: `post-list MAIN_MENU LINK` never matches when `MAIN_MENU` cannot be reached from the source of `post-list` through calls, values and defaults of the contract sources.
 
 ## Theme API
 
@@ -220,12 +215,7 @@ themecore.ThemeAPICurrent() // newest Theme API version
 themecore.ThemeAPIMin()     // oldest Theme API version still accepted
 ```
 
-`DetectThemeAPIVersion` returns the version a package declares in `built.toml` during build, with the evidence for it. `DetectFeatureFloor` returns the largest version of the features a package uses; install and activation reject a package whose declared version is lower.
-
-```go
-version, evidence, err := themecore.DetectThemeAPIVersion(p)
-floor, evidence, err := themecore.DetectFeatureFloor(p)
-```
+The feature floor of a package is the largest version of the features it uses, 0 if it uses none. Build declares the larger of the floor and `ThemeAPIMin` as `theme-api-version` (`report.Version`); install, activation and dev mode compute the floor again and reject a package whose declared version is lower. Both look at the package, the canonical CSS included, not at the author's source, and come with the evidence of the floor.
 
 Each `Signal` names a feature, the version that introduced it and the first place in the package that shows it.
 

@@ -5,21 +5,22 @@ import (
 	"strings"
 )
 
-// Warning is a finding of Lint. Where is a selector or an address, for
-// example ".layout-post h1" or "post-list MAIN_MENU LINK".
+// Warning is a finding of the development checks in BuildReport. Where is
+// a selector or an address, for example ".layout-post h1" or "post-list
+// MAIN_MENU LINK".
 type Warning struct {
 	Message string
 	Where   string
 }
 
-// Lint returns warnings for mistakes that are valid CSS but never match.
+// lint returns warnings for mistakes that are valid CSS but never match.
 // Only development tools call it; it is not part of the Theme API, and
 // install and activation do not call it. It reports root classes used
 // without :scope and addresses whose component the layout never renders
 // (themecore, Kök Sınıfı Uyarısı and Ölü Adres Uyarısı). A package whose
 // attributes.toml, contract.toml or assets/theme.css cannot be read gets
 // no warnings; those errors are reported by the checks.
-func Lint(p Package) []Warning {
+func lint(p Package) []Warning {
 	b, ok := p.Files["attributes.toml"]
 	if !ok {
 		return nil

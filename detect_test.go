@@ -15,12 +15,12 @@ func TestDetectFeatureFloor(t *testing.T) {
 			"built.toml":      []byte("x"),
 		},
 	}
-	floor, evidence, err := DetectFeatureFloor(p)
+	floor, evidence, err := detectFeatureFloor(p)
 	if err != nil {
-		t.Fatalf("DetectFeatureFloor: unexpected error: %v", err)
+		t.Fatalf("detectFeatureFloor: unexpected error: %v", err)
 	}
 	if floor != 1 {
-		t.Errorf("DetectFeatureFloor: floor: got %d want 1", floor)
+		t.Errorf("detectFeatureFloor: floor: got %d want 1", floor)
 	}
 	want := []Signal{
 		{Feature: "pkg.attributes", IntroducedIn: 1, Where: "attributes.toml"},
@@ -35,32 +35,32 @@ func TestDetectFeatureFloor(t *testing.T) {
 		{Feature: "compono.builtin.image", IntroducedIn: 1, Where: "post IMAGE"},
 	}
 	if !reflect.DeepEqual(evidence, want) {
-		t.Errorf("DetectFeatureFloor: evidence mismatch:\ngot  %#v\nwant %#v", evidence, want)
+		t.Errorf("detectFeatureFloor: evidence mismatch:\ngot  %#v\nwant %#v", evidence, want)
 	}
 }
 
 func TestDetectFeatureFloorNothing(t *testing.T) {
 	p := Package{Files: map[string][]byte{"built.toml": []byte("x")}}
-	floor, evidence, err := DetectFeatureFloor(p)
+	floor, evidence, err := detectFeatureFloor(p)
 	if err != nil {
-		t.Fatalf("DetectFeatureFloor: unexpected error: %v", err)
+		t.Fatalf("detectFeatureFloor: unexpected error: %v", err)
 	}
 	if floor != 0 {
-		t.Errorf("DetectFeatureFloor: floor: got %d want 0", floor)
+		t.Errorf("detectFeatureFloor: floor: got %d want 0", floor)
 	}
 	if len(evidence) != 0 {
-		t.Errorf("DetectFeatureFloor: evidence: got %#v want empty", evidence)
+		t.Errorf("detectFeatureFloor: evidence: got %#v want empty", evidence)
 	}
 }
 
 func TestDetectFeatureFloorUnreadableAttributes(t *testing.T) {
 	p := Package{Files: map[string][]byte{"attributes.toml": []byte("x = ")}}
-	_, _, err := DetectFeatureFloor(p)
+	_, _, err := detectFeatureFloor(p)
 	if err == nil {
-		t.Fatalf("DetectFeatureFloor: expected error, got nil")
+		t.Fatalf("detectFeatureFloor: expected error, got nil")
 	}
 	if !strings.Contains(err.Error(), "attributes.toml") {
-		t.Errorf("DetectFeatureFloor: error %q does not contain %q", err.Error(), "attributes.toml")
+		t.Errorf("detectFeatureFloor: error %q does not contain %q", err.Error(), "attributes.toml")
 	}
 }
 
@@ -73,31 +73,31 @@ func TestDetectThemeAPIVersion(t *testing.T) {
 			"built.toml":      []byte("x"),
 		},
 	}
-	version, evidence, err := DetectThemeAPIVersion(pFull)
+	version, evidence, err := detectThemeAPIVersion(pFull)
 	if err != nil {
-		t.Fatalf("DetectThemeAPIVersion: unexpected error: %v", err)
+		t.Fatalf("detectThemeAPIVersion: unexpected error: %v", err)
 	}
 	if version != 1 {
-		t.Errorf("DetectThemeAPIVersion: version: got %d want 1", version)
+		t.Errorf("detectThemeAPIVersion: version: got %d want 1", version)
 	}
-	_, wantEvidence, floorErr := DetectFeatureFloor(pFull)
+	_, wantEvidence, floorErr := detectFeatureFloor(pFull)
 	if floorErr != nil {
-		t.Fatalf("DetectFeatureFloor: unexpected error: %v", floorErr)
+		t.Fatalf("detectFeatureFloor: unexpected error: %v", floorErr)
 	}
 	if !reflect.DeepEqual(evidence, wantEvidence) {
-		t.Errorf("DetectThemeAPIVersion: evidence mismatch:\ngot  %#v\nwant %#v", evidence, wantEvidence)
+		t.Errorf("detectThemeAPIVersion: evidence mismatch:\ngot  %#v\nwant %#v", evidence, wantEvidence)
 	}
 
 	pMin := Package{Files: map[string][]byte{"built.toml": []byte("x")}}
-	versionMin, evidenceMin, err := DetectThemeAPIVersion(pMin)
+	versionMin, evidenceMin, err := detectThemeAPIVersion(pMin)
 	if err != nil {
-		t.Fatalf("DetectThemeAPIVersion: unexpected error: %v", err)
+		t.Fatalf("detectThemeAPIVersion: unexpected error: %v", err)
 	}
 	if versionMin != ThemeAPIMin() {
-		t.Errorf("DetectThemeAPIVersion: version: got %d want %d", versionMin, ThemeAPIMin())
+		t.Errorf("detectThemeAPIVersion: version: got %d want %d", versionMin, ThemeAPIMin())
 	}
 	if len(evidenceMin) != 0 {
-		t.Errorf("DetectThemeAPIVersion: evidence: got %#v want empty", evidenceMin)
+		t.Errorf("detectThemeAPIVersion: evidence: got %#v want empty", evidenceMin)
 	}
 }
 

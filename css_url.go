@@ -129,7 +129,7 @@ func checkValueURLs(toks []cssToken, line int) error {
 }
 
 // checkAssetURLs checks that every URL in the package's assets/theme.css
-// names a file of the package. Transform and Verify only see the CSS, so
+// names a file of the package. transform and verify only see the CSS, so
 // they check the form of URLs; this check needs the package.
 //
 // If p.Files has no themeCSS, the package has no CSS and checkAssetURLs

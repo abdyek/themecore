@@ -26,7 +26,7 @@ h1 { font-family: "acme-inter", sans-serif; }
 @media (min-width:48rem){@scope (umono-root){:scope>nav{display:flex}}}
 @layer components{@scope (umono-root){.card{padding:1rem}}}
 `
-	out, err := Transform([]byte(in))
+	out, err := transform([]byte(in))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -104,7 +104,7 @@ func TestTransform(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			out, err := Transform([]byte(tc.in))
+			out, err := transform([]byte(tc.in))
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
@@ -209,7 +209,7 @@ func TestTransformRejectsGrammar(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			_, err := Transform([]byte(tc.in))
+			_, err := transform([]byte(tc.in))
 			if err == nil {
 				t.Fatalf("expected error, got nil")
 			}
@@ -252,7 +252,7 @@ func TestVerify(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			if err := Verify([]byte(tc.in)); err != nil {
+			if err := verify([]byte(tc.in)); err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
 		})
@@ -333,7 +333,7 @@ func TestVerifyRejects(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := Verify([]byte(tc.in))
+			err := verify([]byte(tc.in))
 			if err == nil {
 				t.Fatalf("expected error, got nil")
 			}

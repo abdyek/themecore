@@ -26,7 +26,7 @@ func TestLintRootClass(t *testing.T) {
 		"attributes.toml":  []byte(lintAttrs),
 		"assets/theme.css": []byte(lintCSS),
 	}}
-	got := Lint(p)
+	got := lint(p)
 	want := []Warning{
 		{
 			Message: ".layout-post h1 never matches: .layout-post is a root class, on <umono-root> only; use :scope.layout-post",
@@ -38,7 +38,7 @@ func TestLintRootClass(t *testing.T) {
 		},
 	}
 	if !reflect.DeepEqual(got, want) {
-		t.Errorf("Lint() = %v, want %v", got, want)
+		t.Errorf("lint() = %v, want %v", got, want)
 	}
 }
 
@@ -79,9 +79,9 @@ func TestLintNothing(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := Lint(tt.p)
+			got := lint(tt.p)
 			if len(got) != 0 {
-				t.Errorf("Lint() = %v, want nil", got)
+				t.Errorf("lint() = %v, want nil", got)
 			}
 		})
 	}
@@ -100,7 +100,7 @@ func TestLintDeadAddresses(t *testing.T) {
 		{Message: "home UNUSED LINK never matches: the layout home never renders UNUSED", Where: "home UNUSED LINK"},
 		{Message: "post-list MAIN_MENU LINK never matches: the layout post-list never renders MAIN_MENU", Where: "post-list MAIN_MENU LINK"},
 	}
-	if got := Lint(Package{Files: files}); !reflect.DeepEqual(got, want) {
-		t.Errorf("Lint = %#v, want %#v", got, want)
+	if got := lint(Package{Files: files}); !reflect.DeepEqual(got, want) {
+		t.Errorf("lint = %#v, want %#v", got, want)
 	}
 }
