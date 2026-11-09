@@ -6,29 +6,29 @@ import "strings"
 // edited or deleted, and an ID is never reused. Extending the Theme API is a
 // Feature row, narrowing it is a Break row.
 
-// DetectorFunc reports whether a package uses a feature. where is the first
+// detectorFunc reports whether a package uses a feature. where is the first
 // place in the package that shows it, for example "assets/icons/cart.svg".
 // Detectors look at the package itself: the canonical CSS and the package's
 // own contract.toml, never the author's sources.
-type DetectorFunc func(p Package) (where string, found bool)
+type detectorFunc func(p Package) (where string, found bool)
 
-// Feature is a capability of the Theme API and the version that introduced
+// featureRow is a capability of the Theme API and the version that introduced
 // it. Every feature has a detector.
-type Feature struct {
+type featureRow struct {
 	ID           string
 	IntroducedIn int
-	Detect       DetectorFunc
+	Detect       detectorFunc
 }
 
-// Break is a narrowing of the Theme API. It raises both ThemeAPICurrent and
+// breakRow is a narrowing of the Theme API. It raises both ThemeAPICurrent and
 // ThemeAPIMin to At.
-type Break struct {
+type breakRow struct {
 	At     int
 	Reason string
 }
 
-// Features are the feature rows of the ledger.
-var Features = []Feature{
+// featureRows are the feature rows of the ledger.
+var featureRows = []featureRow{
 	{ID: "pkg.attributes", IntroducedIn: 1, Detect: detectFile("attributes.toml")},
 	{ID: "attr.class", IntroducedIn: 1, Detect: detectAddress(hasClass)},
 	{ID: "attr.sizes", IntroducedIn: 1, Detect: detectAddress(hasSizes)},
@@ -73,21 +73,21 @@ var Features = []Feature{
 	{ID: "compono.markdown.table", IntroducedIn: 1, Detect: detectMarkdown("table")},
 }
 
-// Breaks are the break rows of the ledger.
-var Breaks = []Break{
+// breakRows are the break rows of the ledger.
+var breakRows = []breakRow{
 	{At: 1, Reason: "First Theme API version"},
 }
 
-// ThemeAPICurrent is the newest Theme API version: the largest IntroducedIn
-// of Features and At of Breaks.
-func ThemeAPICurrent() int { return themeAPICurrent(Features, Breaks) }
+// ThemeAPICurrent is the newest Theme API version: the largest version of
+// the feature and break rows of the capability ledger.
+func ThemeAPICurrent() int { return themeAPICurrent(featureRows, breakRows) }
 
-// ThemeAPIMin is the oldest Theme API version still accepted: the largest At
-// of Breaks.
-func ThemeAPIMin() int { return themeAPIMin(Breaks) }
+// ThemeAPIMin is the oldest Theme API version still accepted: the largest
+// version of the break rows of the capability ledger.
+func ThemeAPIMin() int { return themeAPIMin(breakRows) }
 
 // themeAPICurrent returns the max of IntroducedIn and At across both slices (0 if both are empty).
-func themeAPICurrent(features []Feature, breaks []Break) int {
+func themeAPICurrent(features []featureRow, breaks []breakRow) int {
 	max := 0
 	for _, f := range features {
 		if f.IntroducedIn > max {
@@ -103,7 +103,7 @@ func themeAPICurrent(features []Feature, breaks []Break) int {
 }
 
 // themeAPIMin returns the largest At in breaks (0 if breaks is empty).
-func themeAPIMin(breaks []Break) int {
+func themeAPIMin(breaks []breakRow) int {
 	max := 0
 	for _, b := range breaks {
 		if b.At > max {
@@ -114,13 +114,13 @@ func themeAPIMin(breaks []Break) int {
 }
 
 // Builtins returns the names of the built-ins open to themes, from the
-// compono.builtin.* rows of Features in ledger order: the last segment of
-// the ID in upper case, with "-" as "_". Address validation, the detectors
-// and the undefined call rule look only at this set, not at Compono's list.
+// compono.builtin.* feature rows in ledger order: the last segment of the ID
+// in upper case, with "-" as "_". Address validation, the detectors and the
+// undefined call rule look only at this set, not at Compono's list.
 // It returns a new slice on every call.
 func Builtins() []string {
 	var names []string
-	for _, f := range Features {
+	for _, f := range featureRows {
 		if rest, ok := strings.CutPrefix(f.ID, "compono.builtin."); ok {
 			names = append(names, strings.ToUpper(strings.ReplaceAll(rest, "-", "_")))
 		}
@@ -129,12 +129,12 @@ func Builtins() []string {
 }
 
 // MarkdownElements returns the names of the Markdown elements open to
-// themes, from the compono.markdown.* rows of Features in ledger order: the
+// themes, from the compono.markdown.* feature rows in ledger order: the
 // last segment of the ID, the name of the element's spec. It returns a new
 // slice on every call.
 func MarkdownElements() []string {
 	var names []string
-	for _, f := range Features {
+	for _, f := range featureRows {
 		if rest, ok := strings.CutPrefix(f.ID, "compono.markdown."); ok {
 			names = append(names, rest)
 		}

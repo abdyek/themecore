@@ -36,7 +36,7 @@ func attributeAddresses(p Package) map[string]map[string]string {
 
 // detectAddress returns a detector that scans the addresses of p in sorted
 // order and returns the first address for which pred is true.
-func detectAddress(pred func(address string, attrs map[string]string) bool) DetectorFunc {
+func detectAddress(pred func(address string, attrs map[string]string) bool) detectorFunc {
 	return func(p Package) (string, bool) {
 		addrs := attributeAddresses(p)
 		if len(addrs) == 0 {
@@ -62,7 +62,7 @@ func addressParts(address string) int {
 }
 
 // detectFile returns a detector that reports path if p.Files has path.
-func detectFile(path string) DetectorFunc {
+func detectFile(path string) detectorFunc {
 	return func(p Package) (string, bool) {
 		if _, ok := p.Files[path]; ok {
 			return path, true
@@ -73,7 +73,7 @@ func detectFile(path string) DetectorFunc {
 
 // detectAsset returns a detector that scans the paths of p.Files in sorted
 // order and returns the first one that starts with "assets/" and ends with ext.
-func detectAsset(ext string) DetectorFunc {
+func detectAsset(ext string) detectorFunc {
 	return func(p Package) (string, bool) {
 		paths := make([]string, 0, len(p.Files))
 		for path := range p.Files {
@@ -136,7 +136,7 @@ func findAtRuleLine(rules []cssRule, name string) (int, bool) {
 // detectAtRule returns a detector for an at-rule in the package's canonical
 // assets/theme.css. Detectors look at the canonical CSS, not the author's
 // source. where is the file and the line of the first such at-rule.
-func detectAtRule(name string) DetectorFunc {
+func detectAtRule(name string) detectorFunc {
 	return func(p Package) (string, bool) {
 		b, ok := p.Files[themeCSS]
 		if !ok {

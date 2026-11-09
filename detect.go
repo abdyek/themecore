@@ -32,7 +32,7 @@ func detectFeatureFloor(p Package) (floor int, evidence []Signal, err error) {
 			return 0, nil, fmt.Errorf("assets/theme.css: cannot be read for feature detection: %w", err)
 		}
 	}
-	floor, evidence = detectFeatures(p, Features)
+	floor, evidence = detectFeatures(p, featureRows)
 	return floor, evidence, nil
 }
 
@@ -52,7 +52,7 @@ func detectThemeAPIVersion(p Package) (version int, evidence []Signal, err error
 }
 
 // detectFeatures runs the detector of every feature on p.
-func detectFeatures(p Package, features []Feature) (floor int, evidence []Signal) {
+func detectFeatures(p Package, features []featureRow) (floor int, evidence []Signal) {
 	for _, f := range features {
 		where, found := f.Detect(p)
 		if !found {

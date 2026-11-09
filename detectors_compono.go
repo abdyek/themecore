@@ -37,7 +37,7 @@ func contractWhere(s contractSource, rng compono.Range) string {
 // default), then the first address of attributes.toml whose type filter is
 // it. A name the contract defines as a component never resolves to the
 // built-in.
-func detectBuiltin(name string) DetectorFunc {
+func detectBuiltin(name string) detectorFunc {
 	byAddress := detectAddress(func(address string, _ map[string]string) bool {
 		parts := strings.Split(address, " ")
 		return len(parts) > 1 && parts[len(parts)-1] == name
@@ -62,7 +62,7 @@ func detectBuiltin(name string) DetectorFunc {
 
 // detectMarkdown returns a detector for the Markdown element name: its first
 // use in contract.toml.
-func detectMarkdown(name string) DetectorFunc {
+func detectMarkdown(name string) detectorFunc {
 	return func(p Package) (string, bool) {
 		sources, _, ok := contractFacts(p)
 		if !ok {

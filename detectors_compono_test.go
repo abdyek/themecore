@@ -32,16 +32,16 @@ func TestLedgerComponoRows(t *testing.T) {
 		"compono.markdown.hr",
 		"compono.markdown.table",
 	}
-	if len(Features) != 42 {
-		t.Fatalf("expected 42 features, got %d", len(Features))
+	if len(featureRows) != 42 {
+		t.Fatalf("expected 42 features, got %d", len(featureRows))
 	}
 	for i, id := range want {
 		j := 20 + i
-		if Features[j].ID != id {
-			t.Errorf("Features[%d].ID = %q, want %q", j, Features[j].ID, id)
+		if featureRows[j].ID != id {
+			t.Errorf("featureRows[%d].ID = %q, want %q", j, featureRows[j].ID, id)
 		}
-		if Features[j].IntroducedIn != 1 {
-			t.Errorf("Features[%d] %q IntroducedIn = %d, want 1", j, id, Features[j].IntroducedIn)
+		if featureRows[j].IntroducedIn != 1 {
+			t.Errorf("featureRows[%d] %q IntroducedIn = %d, want 1", j, id, featureRows[j].IntroducedIn)
 		}
 	}
 }
@@ -94,7 +94,7 @@ func TestComponoDetectors(t *testing.T) {
 		"compono.markdown.br":      "contract.toml:components[1].source:1",
 		"compono.markdown.strong":  "contract.toml:components[0].source:2",
 	}
-	for _, f := range Features {
+	for _, f := range featureRows {
 		if !strings.HasPrefix(f.ID, "compono.") {
 			continue
 		}
