@@ -7,9 +7,9 @@ import (
 
 var ledgerIDPattern = regexp.MustCompile(`^(pkg|attr|assets|css|compono)(\.[a-z0-9]+(-[a-z0-9]+)*)+$`)
 
-func TestThemeAPIV1(t *testing.T) {
-	if got := ThemeAPICurrent(); got != 1 {
-		t.Errorf("ThemeAPICurrent() = %d, want 1", got)
+func TestThemeAPIVersions(t *testing.T) {
+	if got := ThemeAPICurrent(); got != 2 {
+		t.Errorf("ThemeAPICurrent() = %d, want 2", got)
 	}
 	if got := ThemeAPIMin(); got != 1 {
 		t.Errorf("ThemeAPIMin() = %d, want 1", got)

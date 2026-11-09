@@ -32,8 +32,8 @@ func TestLedgerComponoRows(t *testing.T) {
 		"compono.markdown.hr",
 		"compono.markdown.table",
 	}
-	if len(featureRows) != 42 {
-		t.Fatalf("expected 42 features, got %d", len(featureRows))
+	if len(featureRows) != 43 {
+		t.Fatalf("expected 43 features, got %d", len(featureRows))
 	}
 	for i, id := range want {
 		j := 20 + i
@@ -116,6 +116,40 @@ func TestBuiltinDetectorWithoutContract(t *testing.T) {
 	}
 	if _, found := feature(t, "compono.markdown.p").Detect(p); found {
 		t.Errorf("compono.markdown.p: found without contract.toml")
+	}
+}
+
+func TestCurrentAutoDetector(t *testing.T) {
+	if got := feature(t, "compono.link.current-auto").IntroducedIn; got != 2 {
+		t.Errorf("compono.link.current-auto IntroducedIn = %d, want 2", got)
+	}
+	tests := []struct {
+		name      string
+		file      string
+		wantWhere string
+		wantFound bool
+	}{
+		{"direct", "direct.toml", "contract.toml:layouts[0].source", true},
+		{"other-value", "other-value.toml", "", false},
+		{"from-param", "from-param.toml", "", false},
+		{"defined-name", "defined-name.toml", "", false},
+		{"no-contract", "", "", false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			p := Package{Files: map[string][]byte{}}
+			if tt.file != "" {
+				b, err := os.ReadFile("testdata/current-auto/" + tt.file)
+				if err != nil {
+					t.Fatalf("read %s: %v", tt.file, err)
+				}
+				p.Files["contract.toml"] = b
+			}
+			where, found := feature(t, "compono.link.current-auto").Detect(p)
+			if where != tt.wantWhere || found != tt.wantFound {
+				t.Errorf("compono.link.current-auto: got (%q, %v), want (%q, %v)", where, found, tt.wantWhere, tt.wantFound)
+			}
+		})
 	}
 }
 

@@ -1,0 +1,12 @@
+schema = "https://umono.dev/schemas/theme-contract/v1"
+id = "corpus/current-auto"
+version = "v1.0"
+
+[[layouts]]
+id = "post"
+source = '''
+{{ MENU }}
+
+~ MENU
+{{ LINK text = "Home" url = "/" current = "__auto" }}
+'''

@@ -1,0 +1,16 @@
+schema = "https://umono.dev/schemas/theme-contract/v1"
+id = "example/menu"
+version = "v0.1"
+
+[[layouts]]
+id = "post"
+source = '''
+{{ LINK text = "Home" url = "/" current = "__auto" }}
+'''
+
+[[components]]
+name = "LINK"
+source = '''
+~ text = "" url = "" current = ""
+{{ text }}
+'''
