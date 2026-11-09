@@ -4,44 +4,41 @@
 
 > **Status:** under development for Umono v0.9. The API is not stable yet.
 
+This README describes the rules a theme is held to and when they apply. The functions and their signatures are documented in the package documentation.
+
 ## Install
 
 ```sh
 go get github.com/umono-cms/themecore
 ```
 
+## Where the Checks Run
+
+The checks of a theme run from one place, in a fixed order, through three entry points. CLI and Umono do not run single checks, so no check runs on its own, past the package limits, the content allowlist and `schema`.
+
+- **Build and the dev proxy** (`CheckSource`) check the development directory against the contract that `theme.toml` refers to. Only `assets/`, `attributes.toml` and `LICENSE` are read into the package, with the contract as `contract.toml`. `theme.toml` is checked but does not go in, and other files such as `.dev/` and `dist/` are not read. An empty directory is skipped; any other file that breaks the package rules stops the build instead of being left out silently. `assets/theme.css` is replaced by its canonical CSS. The result is what goes into the built file: the CLI adds `built.toml` with the declared Theme API version and then `checksums.json`. Build also gives the evidence of the version and [warnings](#warnings) that do not stop it.
+- **Install and activation** (`CheckPackage`) check a package read from a built file or an installed directory. `checksums.json` and the Theme API range are checked by the caller before. Then the required files must exist (`built.toml`, `contract.toml`, `checksums.json`, `assets/theme.css`), `built.toml` and `contract.toml` must be valid and name the same contract, and the assets, the canonical CSS, the files its URLs point to, `attributes.toml` and `LICENSE` must pass. Last, a `theme-api-version` lower than the version of the features the package uses is rejected. The result is the contract, the compiled attribute table (empty without `attributes.toml`) and the feature floor with its evidence.
+- **Umono's dev mode** (`CheckDev`) checks `themes/dev/dev/0.0.0/` on every request and keeps no cache. It runs the checks of install and activation with the privileges of `dev/dev`, which exist nowhere else:
+  - There is no `checksums.json`.
+  - `assets/`, `attributes.toml` and `contract.toml` may be symlinks, but they must resolve inside the theme project.
+  - `assets/theme.css` is turned into canonical CSS as in build, instead of being checked as canonical CSS.
+  - `built.toml` has the id `dev/dev` and the version `0.0.0`, which every other path rejects.
+
+  The package limits and content, `built.toml`, `contract.toml`, `LICENSE` and the feature floor are fatal: the theme is not activated. Errors of `theme.css`, `attributes.toml` and single assets are returned one by one, so dev mode goes on: the `theme.css` request fails, pages render without attribute injection, and a broken asset is not served. The result also holds the validated `built.toml` and the unchanged bytes of `contract.toml`, so Umono never reads those files itself.
+
+Checks that need a database or the network, such as comparing the contract with umono.dev, belong to the Umono runtime and are not in `themecore`.
+
 ## File Format
 
-All configuration files of the theme system (`theme.toml`, `built.toml`, `contract.toml` and `attributes.toml`) are TOML v1.0.0 and UTF-8. Syntax added by newer TOML versions is rejected, and so are keys that a schema does not define.
-
-The syntax that TOML v1.1.0 adds is rejected by a scan before decoding, whatever version of the TOML decoder the binary is built with: a newline or a trailing comma in an inline table, the escapes `\e` and `\xHH`, and a time or date-time without seconds. A program that builds `themecore` in calls `TOMLConformance` in its tests:
-
-```go
-func TestTOMLConformance(t *testing.T) {
-	if err := themecore.TOMLConformance(); err != nil {
-		t.Fatal(err)
-	}
-}
-```
-
-It returns an error if the decoder accepts a document that is not TOML v1.0.0 or rejects one that is. Go's version selection cannot cap the version of a dependency, so the decoder in a binary may be newer than the one `themecore` is tested with.
+All configuration files of the theme system (`theme.toml`, `built.toml`, `contract.toml` and `attributes.toml`) are TOML v1.0.0 and UTF-8. Syntax added by newer TOML versions is rejected, and so are keys that a schema does not define. The syntax that TOML v1.1.0 adds is rejected by a scan before decoding, whatever version of the TOML decoder the binary is built with: a newline or a trailing comma in an inline table, the escapes `\e` and `\xHH`, and a time or date-time without seconds.
 
 Each file has a `schema` key. It is required and must be a schema URL that `themecore` reads for that file, for example `https://umono.dev/schemas/theme-manifest/v1` for `theme.toml`. An unknown URL is rejected, not ignored.
 
-Text fields are single line, without control characters and without leading or trailing whitespace.
+Text fields are single line, without control characters and without leading or trailing whitespace. Contract sources are the only multi-line text fields.
 
 ## Packages
 
-A theme package is read either from a built file (`.umono-theme`, a zip) or from its installed directory:
-
-```go
-p, err := themecore.ReadZip(f, size) // size from the file system's metadata
-p, err := themecore.ReadDir("themes/acme/minimal/0.1.0")
-```
-
-Both check the package limits before any file is read, counting the real bytes while reading, and then the package content allowlist.
-
-Hard links are detected by the link count of the file system, which only Unix gives. `ReadDir` therefore fails on other platforms instead of accepting a package it cannot check; `ReadZip` works everywhere.
+A theme package is a built file (`.umono-theme`, a zip) or its installed directory, `themes/{org}/{id}/{version}/`. Both are read the same way: the package limits are checked before any file is parsed, by counting the real bytes while reading, and then the content allowlist. A built file larger than the limit is not opened.
 
 | Measure | Limit |
 | --- | --- |
@@ -55,7 +52,11 @@ Hard links are detected by the link count of the file system, which only Unix gi
 | Directories in a path | 8, `assets` included |
 | Path length | 256 bytes |
 
-The package root holds only `built.toml`, `contract.toml`, `checksums.json`, `attributes.toml` and `LICENSE`, and `assets/` is the only directory. Every path segment matches `[a-z0-9][a-z0-9._-]*` and is at most 64 bytes; `LICENSE` is the only exception. Empty directories, symlinks, hard links, duplicate or encrypted zip entries and compression methods other than store and deflate are rejected.
+The limits are fixed and the same in build, install, activation and dev mode.
+
+The package root holds only `built.toml`, `contract.toml`, `checksums.json`, `attributes.toml` and `LICENSE`, and `assets/` is the only directory. Every path segment matches `[a-z0-9][a-z0-9._-]*` and is at most 64 bytes; `LICENSE` is the only exception. Empty directories, symlinks, hard links, duplicate or encrypted zip entries and compression methods other than store and deflate are rejected. An installed directory is checked again on activation, so a file dropped into it later makes the theme invalid. `LICENSE` must be valid UTF-8 and is not checked otherwise.
+
+Hard links are detected by the link count of the file system, which only Unix gives. Reading an installed directory therefore fails on other platforms instead of accepting a package it cannot check; reading a built file works everywhere.
 
 `assets/theme.css` is required and is the only CSS file. Every other file under `assets/` has one of these extensions, and its content must start with the format's magic bytes:
 
@@ -69,52 +70,13 @@ The package root holds only `built.toml`, `contract.toml`, `checksums.json`, `at
 | `.avif` | An ISO BMFF `ftyp` box with the brand `avif` or `avis` |
 | `.gif` | `GIF87a` or `GIF89a` |
 
-## Checks
-
-The checks of a package run from one place, in the order of the static check table; CLI and Umono do not call them one by one. `CheckPackage` is for install and activation:
-
-```go
-result, err := themecore.CheckPackage(p) // after VerifyChecksums and the Theme API range
-```
-
-`CheckSource` is for build and the dev proxy. `dir` is the development directory and `contract` the contract file that `theme.toml` refers to; `themecore` does not know where the CLI caches it:
-
-```go
-p, report, err := themecore.CheckSource(dir, contract)
-```
-
-Only `assets/`, `attributes.toml` and `LICENSE` are read from `dir` into the package, with `contract` as `contract.toml`; `theme.toml` is checked but does not go in, and other files such as `.dev/` and `dist/` are not read. An empty directory is skipped, any other file that breaks the package rules stops the build. `assets/theme.css` is replaced by its canonical CSS. The returned package is what goes into the built file; the CLI adds `built.toml` with `report.Version` and then `checksums.json`. `report` also holds the evidence of the version and warnings for mistakes that are valid CSS but never match (see [Theme CSS](#theme-css)); they do not stop the build.
-
-`CheckPackage` checks that `built.toml`, `contract.toml`, `checksums.json` and `assets/theme.css` exist, parses `built.toml` and `contract.toml` and checks that the contract of `built.toml` is the package's `contract.toml`. Then it checks the assets, the canonical grammar of `assets/theme.css`, the files the CSS URLs point to, `attributes.toml` against the contract and `LICENSE`. Last, it rejects a `theme-api-version` lower than the version of the features the package uses. The `Result` holds the contract, the compiled attribute table (empty without `attributes.toml`) and the feature floor with its evidence.
-
-`CheckDev` is for Umono's dev mode. `dir` is `themes/dev/dev/0.0.0/` and `root` the theme project (`UMONO_THEME_DEV`):
-
-```go
-result, err := themecore.CheckDev(dir, root) // on every request; nothing is cached
-```
-
-It runs the checks of `CheckPackage` with the privileges of `dev/dev`: there is no `checksums.json`; `assets/`, `attributes.toml` and `contract.toml` may be symlinks that resolve inside `root`; `assets/theme.css` is turned into canonical CSS as in build instead of being checked as canonical CSS; `built.toml` has the id `dev/dev` and the version `0.0.0`, which `ParseBuilt` and `CheckPackage` reject. The package limits and content, `built.toml`, `contract.toml`, `LICENSE` and the feature floor are fatal. Errors of `theme.css`, `attributes.toml` and single assets are returned in the result instead, so dev mode goes on: `CSSErr`, `AttributesErr` and `AssetErrs`.
-
-The result also holds `Built`, the validated `built.toml`, and `ContractSource`, the unchanged bytes of `contract.toml`. Umono checks the Theme API range from `Built` and adds the contract record from `ContractSource` instead of reading the files itself: only `CheckDev` accepts `dev/dev` and resolves the symlinks inside `root`. Both are empty on a fatal error.
-
 ## `checksums.json`
 
-`Checksums` returns the content of `checksums.json` during build; `VerifyChecksums` checks a package against it during install and activation:
-
-```go
-b, err := themecore.Checksums(p) // p without checksums.json
-err = themecore.VerifyChecksums(p)
-```
-
-The algorithm is `sha256`, and `files` lists every package file except `checksums.json` itself, with no other entries. `Checksums` is deterministic: keys in byte order and a fixed format. `VerifyChecksums` looks at values, not format.
+Build writes `checksums.json`; install and activation verify the package against it. The algorithm is `sha256`, and `files` lists every package file except `checksums.json` itself, with no other entries. The hash of `assets/theme.css` is that of the canonical CSS. Writing is deterministic, with keys in byte order and a fixed format, so the same content gives the same bytes. Verifying looks at values, not format.
 
 ## `theme.toml`
 
-`ParseManifest` parses and validates `theme.toml`, the manifest the theme author writes:
-
-```go
-m, err := themecore.ParseManifest(b)
-```
+`theme.toml` is the manifest the theme author writes. It does not go into the package.
 
 | Key | Required | Rule |
 | --- | --- | --- |
@@ -128,27 +90,20 @@ m, err := themecore.ParseManifest(b)
 | `homepage`, `repository` | No | Absolute `https://` URL, at most 2048 bytes |
 | `authors` | No | At least one `[[authors]]` with `name` and an optional `https://` `url` |
 
-Optional keys are `nil` in `Manifest` when they are absent.
-
 ## `built.toml`
 
-`ParseBuilt` parses and validates `built.toml`, the manifest of a package. It has the keys of `theme.toml`, with the same rules, under the schema `https://umono.dev/schemas/theme-built/v1`, and two more:
+`built.toml` is the manifest of a package, written by the CLI. It has the keys of `theme.toml`, with the same rules, under the schema `https://umono.dev/schemas/theme-built/v1`, and two more:
 
 | Key | Required | Rule |
 | --- | --- | --- |
 | `theme-api-version` | Yes | An integer, 1 or greater |
 | `built-at` | Yes | An offset date-time in UTC, e.g. `2026-06-02T00:00:00Z` |
 
-`CheckInstallDir` checks that the install path `themes/{org}/{id}/{version}` matches `id` and `version`:
-
-```go
-b, err := themecore.ParseBuilt(data)
-err = b.CheckInstallDir("themes/acme/minimal/0.1.0")
-```
+An installed package sits at `themes/{org}/{id}/{version}`, which must match its `id` and `version`.
 
 ## `contract.toml`
 
-`ParseContract` parses and validates `contract.toml` under the schema `https://umono.dev/schemas/theme-contract/v1`: first the structural layer below, then the sources, which are parsed with Compono (`compono.Analyze`).
+`contract.toml` is validated under the schema `https://umono.dev/schemas/theme-contract/v1`: first the structural layer below, then the sources, which are parsed with Compono.
 
 | Key | Required | Rule |
 | --- | --- | --- |
@@ -158,39 +113,20 @@ err = b.CheckInstallDir("themes/acme/minimal/0.1.0")
 | `layouts` | Yes | At least one `[[layouts]]` with a unique kebab-case `id`, an optional `description` and a non-empty `source` |
 | `components` | No | `[[components]]` with a unique `SCREAMING_SNAKE_CASE` `name`, a non-empty `source` and an optional boolean `expose` |
 
-Sources are the only multi-line text fields.
-
-A source with a grammar error that does not depend on values (`invalid-expression`, `unclosed-expression` or `invalid-parameter-definition`), also in a local that is never called, cannot be parsed and is rejected. So is a call or a value that resolves to nothing: not to a local of its source, a component of the contract or a built-in open to themes. A default (`content = NO_MATTER`) only names the type of a parameter and is not checked. A published contract has neither, so the error means that the program is older than the contract. It wraps `ErrOutdated`, and CLI and Umono report that they are out of date:
-
-```go
-if errors.Is(err, themecore.ErrOutdated) {
-	// "CLI is out of date" or "Umono is out of date"
-}
-```
+A source with a grammar error that does not depend on values (`invalid-expression`, `unclosed-expression` or `invalid-parameter-definition`), also in a local that is never called, cannot be parsed and is rejected. So is a call or a value that resolves to nothing: not to a local of its source, a component of the contract or a built-in open to themes. A default (`content = NO_MATTER`) only names the type of a parameter and is not checked. A published contract has neither, so the error means that the program is older than the contract. The error wraps `ErrOutdated`, so CLI and Umono can report that they are out of date instead of showing the raw error.
 
 ## `attributes.toml`
 
-`CompileAttributes` validates `attributes.toml` under the schema `https://umono.dev/schemas/theme-attributes/v1` against the package's contract and compiles it into a table that rendering reads without touching files:
-
-```go
-table, err := themecore.CompileAttributes(b, contract)
-
-table.Root("post") // attributes of <umono-root> for the layout post
-
-compono.WithAttributeHook(func(builtin string, chain []compono.Frame) map[string]string {
-	return table.Lookup(layout, builtin, chain)
-})
-```
+`attributes.toml` is validated under the schema `https://umono.dev/schemas/theme-attributes/v1` against the package's contract and compiled into a table that rendering reads without touching files.
 
 - An address is `layout`, `layout BUILTIN` or `layout COMPONENT BUILTIN`, with parts separated by a single space. The layout is a layout of the contract, the component is an exposed one and the built-in is one open to themes. A name the contract defines as a component is never a built-in. `layout COMPONENT` is rejected: an exposed component has no element of its own to write to.
 - Only `class` and `sizes` are allowed. `class` is a list of unique printable ASCII tokens separated by single spaces, without the `umono-` and `compono-` prefixes (case-insensitive), of at most 1024 bytes. `sizes` is allowed only on an address that ends with `IMAGE` and is an HTML source size list without `auto`. Its media conditions use the media feature vocabulary of the theme CSS, its sizes are lengths in its units or `calc()`, `min()`, `max()` and `clamp()` of them, and percentages are rejected.
-- `Lookup` finds the scope from the frame chain: the innermost global frame whose scope path is `[UMONO_LAYOUT]` and whose name is an exposed component, otherwise the layout. A local frame, or a site global with the name of an exposed component, is not a scope. `Root` and `Lookup` return a new map on every call, or `nil` when no address matches.
+- The attributes of a `layout` address go on `<umono-root>`, which the runtime writes itself. The other addresses reach Compono through its attribute hook.
+- The scope of a rendered built-in comes from its frame chain: the innermost global frame whose scope path is `[UMONO_LAYOUT]` and whose name is an exposed component, otherwise the layout. A local frame, or a site global with the name of an exposed component, is not a scope.
 
 ## Theme CSS
 
-Build (`CheckSource`) turns the theme author's `assets/theme.css` into the canonical CSS that goes into the package; install and activation (`CheckPackage`) check that the CSS of a package is canonical.
-
-Every style rule of the canonical CSS is inside an `@scope (umono-root)` block, so the theme cannot style anything outside `<umono-root>`. The author's CSS is parsed strictly, never relying on the browser's error recovery, and the canonical CSS that build makes always passes the check of install and activation. That check looks at the grammar, not the bytes.
+Build turns the theme author's `assets/theme.css` into the canonical CSS that goes into the package; install and activation check that the CSS of a package is canonical. Every style rule of the canonical CSS is inside an `@scope (umono-root)` block, so the theme cannot style anything outside `<umono-root>`. The author's CSS is parsed strictly, never relying on the browser's error recovery, and the canonical CSS that build makes always passes the check of install and activation. That check looks at the grammar, not the bytes, so the serialization format can change without rejecting older packages.
 
 The author grammar is closed:
 
@@ -202,46 +138,52 @@ The author grammar is closed:
 - **URLs** are relative paths to allowed files under `assets/`, e.g. `url(fonts/inter.woff2)`.
 - **Generated text:** `content`, `quotes`, `list-style-type` and `list-style` cannot generate words. `content` with a string or an image needs alternative text: `content: "→" / "";`.
 
-`FallbackSource` returns the fallback theme, the default look of pages without an active theme, in the author grammar; `FallbackCSS` returns its canonical CSS. `FallbackSource` is also the starting `assets/theme.css` of a new theme.
+Comments do not go into the canonical CSS, `/*! ... */` license notes included; a license note belongs in `LICENSE`.
 
-Build returns warnings for CSS that is valid but never matches, for development tools only; install and activation do not look for them. Build reports root classes used without `:scope`: a class given only to layout addresses in `attributes.toml` is only on `<umono-root>`, so `.layout-post h1` never matches; write `:scope.layout-post h1`. It also reports addresses whose component the layout never renders: `post-list MAIN_MENU LINK` never matches when `MAIN_MENU` cannot be reached from the source of `post-list` through calls, values and defaults of the contract sources.
+`themecore` also carries the fallback theme, the default look of pages without an active theme, in the author grammar and as canonical CSS. Its source is the starting `assets/theme.css` of a new theme.
+
+### Warnings
+
+Build warns about CSS that is valid but never matches. Warnings are for development tools only and do not stop the build; install and activation do not look for them.
+
+- **Root classes without `:scope`.** A class given only to layout addresses in `attributes.toml` is only on `<umono-root>`, so `.layout-post h1` never matches; write `:scope.layout-post h1`.
+- **Addresses the layout never renders.** `post-list MAIN_MENU LINK` never matches when `MAIN_MENU` cannot be reached from the source of `post-list` through calls, values and defaults of the contract sources.
 
 ## Theme API
 
-The capability ledger inside `themecore` is the single source of the Theme API versions. It has feature rows, each with the version that introduced it and a detector, and break rows for narrowings. Rows are only appended, and the ledger cannot be changed from outside: it shows only through the Theme API versions and the detection results.
+The capability ledger inside `themecore` is the single source of the Theme API versions. It has feature rows, each with the version that introduced it and a detector, and break rows for narrowings. Rows are only appended, and the ledger cannot be changed from outside: it shows only through the Theme API versions and the detection results. The newest version is the largest version of all rows; the oldest version still accepted is the largest version of the break rows.
+
+The feature floor of a package is the largest version of the features it uses, 0 if it uses none. Build declares the larger of the floor and the oldest accepted version as `theme-api-version`; install, activation and dev mode compute the floor again and reject a package whose declared version is lower. Both look at the package, the canonical CSS included, not at the author's source. The evidence of the floor names each feature used, the version that introduced it and the first place in the package that shows it.
+
+The built-ins and Markdown elements open to themes are rows too (`compono.builtin.*`, `compono.markdown.*`), and the sets derive from them: `LINK`, `IMAGE`, `NAV` and the other built-ins, `heading`, `p`, `br` and the other Markdown elements. Address validation, the detectors and the undefined call rule look only at these sets, not at Compono's lists, so a built-in Compono adds stays closed to themes until its row is added.
+
+A built-in detector looks for a reference in `contract.toml` that resolves to the built-in (a call, a value or a default) and for an address of `attributes.toml` whose type filter is it. A name the contract defines as a component, in `[[components]]` or as a local, is never a built-in. A Markdown detector looks for the element in `contract.toml`. The place of a signal in `contract.toml` is the key of the source and the line in it, such as `contract.toml:layouts[0].source:4`.
+
+## Tests of an Embedding Program
+
+Go's version selection cannot cap the version of a dependency, so a program that builds `themecore` in may have a newer TOML decoder or a newer Compono than the ones `themecore` is tested with. Three checks run with the dependencies of the program, and the program runs them in its tests:
 
 ```go
-themecore.ThemeAPICurrent() // newest Theme API version
-themecore.ThemeAPIMin()     // oldest Theme API version still accepted
-```
-
-The feature floor of a package is the largest version of the features it uses, 0 if it uses none. Build declares the larger of the floor and `ThemeAPIMin` as `theme-api-version` (`report.Version`); install, activation and dev mode compute the floor again and reject a package whose declared version is lower. Both look at the package, the canonical CSS included, not at the author's source, and come with the evidence of the floor.
-
-Each `Signal` names a feature, the version that introduced it and the first place in the package that shows it.
-
-The built-ins and Markdown elements open to themes are rows too (`compono.builtin.*`, `compono.markdown.*`), and the sets derive from them: `LINK`, `IMAGE`, `NAV` and the other built-ins, `heading`, `p`, `br` and the other Markdown elements.
-
-Address validation, the detectors and the undefined call rule look only at these sets, not at Compono's lists, so a built-in Compono adds stays closed to themes until its row is added. A built-in detector looks for a reference in `contract.toml` that resolves to the built-in (a call, a value or a default) and for an address of `attributes.toml` whose type filter is it. A name the contract defines as a component, in `[[components]]` or as a local, is never a built-in. A Markdown detector looks for the element in `contract.toml`. The place of a signal in `contract.toml` is the key of the source and the line in it, such as `contract.toml:layouts[0].source:4`.
-
-The detectors that read `contract.toml` depend on how Compono parses it. `themecore` embeds a detector corpus (`detectorcorpus/`: contract inputs and the signals each must give), and a program that builds `themecore` in runs it in its tests, with the Compono version it is built with:
-
-```go
-func TestDetectorCorpus(t *testing.T) {
-	if err := themecore.DetectorCorpus(); err != nil {
-		t.Fatal(err)
+func TestThemecore(t *testing.T) {
+	checks := []struct {
+		name  string
+		check func() error
+	}{
+		{"TOML conformance", themecore.TOMLConformance},
+		{"detector corpus", themecore.DetectorCorpus},
+		{"built-in set", themecore.BuiltinSet},
+	}
+	for _, c := range checks {
+		if err := c.check(); err != nil {
+			t.Errorf("%s: %v", c.name, err)
+		}
 	}
 }
 ```
 
-Go's version selection can also give a program a newer Compono than the one `themecore` is tested with. A built-in or Markdown element of the sets that this Compono no longer has is a removal without a break row. `BuiltinSet` returns an error for it; Compono's extra names are allowed and stay closed to themes. A program that builds `themecore` in calls it in its tests too:
-
-```go
-func TestBuiltinSet(t *testing.T) {
-	if err := themecore.BuiltinSet(); err != nil {
-		t.Fatal(err)
-	}
-}
-```
+- **TOML conformance** fails if the decoder accepts a document that is not TOML v1.0.0 or rejects one that is.
+- **The detector corpus** (`detectorcorpus/`: contract inputs and the signals each must give) fails if a contract of the corpus does not parse or gives other signals.
+- **The built-in set** fails if Compono no longer has a built-in or Markdown element of the sets: a removal without a break row. Compono's extra names are allowed and stay closed to themes.
 
 ## License
 
