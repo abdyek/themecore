@@ -14,10 +14,10 @@ import (
 // binary a newer Compono than the one themecore is tested with, so Umono
 // and CLI call it in their tests.
 func BuiltinSet() error {
-	if err := checkBuiltinSet("built-in", Builtins(), compono.Builtins()); err != nil {
+	if err := checkBuiltinSet("built-in", builtins(), compono.Builtins()); err != nil {
 		return err
 	}
-	return checkBuiltinSet("markdown element", MarkdownElements(), compono.MarkdownElements())
+	return checkBuiltinSet("markdown element", markdownElements(), compono.MarkdownElements())
 }
 
 // checkBuiltinSet checks that every name of set is in componoNames. It

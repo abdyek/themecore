@@ -113,12 +113,12 @@ func themeAPIMin(breaks []breakRow) int {
 	return max
 }
 
-// Builtins returns the names of the built-ins open to themes, from the
+// builtins returns the names of the built-ins open to themes, from the
 // compono.builtin.* feature rows in ledger order: the last segment of the ID
 // in upper case, with "-" as "_". Address validation, the detectors and the
 // undefined call rule look only at this set, not at Compono's list.
 // It returns a new slice on every call.
-func Builtins() []string {
+func builtins() []string {
 	var names []string
 	for _, f := range featureRows {
 		if rest, ok := strings.CutPrefix(f.ID, "compono.builtin."); ok {
@@ -128,11 +128,11 @@ func Builtins() []string {
 	return names
 }
 
-// MarkdownElements returns the names of the Markdown elements open to
+// markdownElements returns the names of the Markdown elements open to
 // themes, from the compono.markdown.* feature rows in ledger order: the
 // last segment of the ID, the name of the element's spec. It returns a new
 // slice on every call.
-func MarkdownElements() []string {
+func markdownElements() []string {
 	var names []string
 	for _, f := range featureRows {
 		if rest, ok := strings.CutPrefix(f.ID, "compono.markdown."); ok {
