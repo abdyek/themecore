@@ -48,25 +48,25 @@ func TestLedgerComponoRows(t *testing.T) {
 
 func TestBuiltins(t *testing.T) {
 	want := []string{"LINK", "IMAGE", "NAV", "LIST", "DETAILS", "HEADER", "MAIN", "FOOTER", "ARTICLE", "ASIDE"}
-	got := Builtins()
+	got := builtins()
 	if !reflect.DeepEqual(got, want) {
-		t.Fatalf("Builtins() = %v, want %v", got, want)
+		t.Fatalf("builtins() = %v, want %v", got, want)
 	}
 	got[0] = "CHANGED"
-	if again := Builtins(); !reflect.DeepEqual(again, want) {
-		t.Errorf("Builtins() after change = %v, want %v", again, want)
+	if again := builtins(); !reflect.DeepEqual(again, want) {
+		t.Errorf("builtins() after change = %v, want %v", again, want)
 	}
 }
 
 func TestMarkdownElements(t *testing.T) {
 	want := []string{"heading", "p", "br", "em", "strong", "link", "inline-code", "code-block", "list", "blockquote", "hr", "table"}
-	got := MarkdownElements()
+	got := markdownElements()
 	if !reflect.DeepEqual(got, want) {
-		t.Fatalf("MarkdownElements() = %v, want %v", got, want)
+		t.Fatalf("markdownElements() = %v, want %v", got, want)
 	}
 	got[0] = "changed"
-	if again := MarkdownElements(); !reflect.DeepEqual(again, want) {
-		t.Errorf("MarkdownElements() after change = %v, want %v", again, want)
+	if again := markdownElements(); !reflect.DeepEqual(again, want) {
+		t.Errorf("markdownElements() after change = %v, want %v", again, want)
 	}
 }
 

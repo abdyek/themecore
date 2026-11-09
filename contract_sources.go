@@ -58,12 +58,12 @@ func checkContractSyntax(sources []contractSource) error {
 
 // checkContractCalls returns an error for the first call or value of the
 // sources that resolves to nothing: not to a local of its source, a
-// component of c or a built-in of Builtins. A default is not a call: it only
+// component of c or a built-in of builtins. A default is not a call: it only
 // names the type of a parameter. The built-ins of the set are those of this
 // themecore, so the error wraps ErrOutdated.
 func checkContractCalls(c Contract, sources []contractSource) error {
 	known := map[string]bool{}
-	for _, name := range Builtins() {
+	for _, name := range builtins() {
 		known[name] = true
 	}
 	for _, comp := range c.Components {

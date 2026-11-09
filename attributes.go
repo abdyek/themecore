@@ -27,8 +27,8 @@ type AttributeTable struct {
 // CompileAttributes validates attributes.toml against the contract c and
 // compiles it into an AttributeTable. Every address is layout, layout
 // BUILTIN or layout COMPONENT BUILTIN with parts separated by a single space,
-// and its names are layouts and exposed components of c and built-ins of
-// Builtins. A name c defines as a component is never a built-in. Only class
+// and its names are layouts and exposed components of c and built-ins open
+// to themes. A name c defines as a component is never a built-in. Only class
 // and sizes are allowed, sizes only on an address that ends with IMAGE.
 func CompileAttributes(b []byte, c Contract) (AttributeTable, error) {
 	const file = "attributes.toml"
@@ -102,7 +102,7 @@ func newAddressNames(c Contract) addressNames {
 			n.exposed[comp.Name] = true
 		}
 	}
-	for _, name := range Builtins() {
+	for _, name := range builtins() {
 		n.builtins[name] = true
 	}
 	return n

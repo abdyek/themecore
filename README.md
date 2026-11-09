@@ -160,7 +160,7 @@ err = b.CheckInstallDir("themes/acme/minimal/0.1.0")
 
 Sources are the only multi-line text fields.
 
-A source with a grammar error that does not depend on values (`invalid-expression`, `unclosed-expression` or `invalid-parameter-definition`), also in a local that is never called, cannot be parsed and is rejected. So is a call or a value that resolves to nothing: not to a local of its source, a component of the contract or a name of `Builtins`. A default (`content = NO_MATTER`) only names the type of a parameter and is not checked. A published contract has neither, so the error means that the program is older than the contract. It wraps `ErrOutdated`, and CLI and Umono report that they are out of date:
+A source with a grammar error that does not depend on values (`invalid-expression`, `unclosed-expression` or `invalid-parameter-definition`), also in a local that is never called, cannot be parsed and is rejected. So is a call or a value that resolves to nothing: not to a local of its source, a component of the contract or a built-in open to themes. A default (`content = NO_MATTER`) only names the type of a parameter and is not checked. A published contract has neither, so the error means that the program is older than the contract. It wraps `ErrOutdated`, and CLI and Umono report that they are out of date:
 
 ```go
 if errors.Is(err, themecore.ErrOutdated) {
@@ -182,7 +182,7 @@ compono.WithAttributeHook(func(builtin string, chain []compono.Frame) map[string
 })
 ```
 
-- An address is `layout`, `layout BUILTIN` or `layout COMPONENT BUILTIN`, with parts separated by a single space. The layout is a layout of the contract, the component is an exposed one and the built-in is a name of `Builtins`. A name the contract defines as a component is never a built-in. `layout COMPONENT` is rejected: an exposed component has no element of its own to write to.
+- An address is `layout`, `layout BUILTIN` or `layout COMPONENT BUILTIN`, with parts separated by a single space. The layout is a layout of the contract, the component is an exposed one and the built-in is one open to themes. A name the contract defines as a component is never a built-in. `layout COMPONENT` is rejected: an exposed component has no element of its own to write to.
 - Only `class` and `sizes` are allowed. `class` is a list of unique printable ASCII tokens separated by single spaces, without the `umono-` and `compono-` prefixes (case-insensitive), of at most 1024 bytes. `sizes` is allowed only on an address that ends with `IMAGE` and is an HTML source size list without `auto`. Its media conditions use the media feature vocabulary of the theme CSS, its sizes are lengths in its units or `calc()`, `min()`, `max()` and `clamp()` of them, and percentages are rejected.
 - `Lookup` finds the scope from the frame chain: the innermost global frame whose scope path is `[UMONO_LAYOUT]` and whose name is an exposed component, otherwise the layout. A local frame, or a site global with the name of an exposed component, is not a scope. `Root` and `Lookup` return a new map on every call, or `nil` when no address matches.
 
@@ -219,12 +219,7 @@ The feature floor of a package is the largest version of the features it uses, 0
 
 Each `Signal` names a feature, the version that introduced it and the first place in the package that shows it.
 
-The built-ins and Markdown elements open to themes are rows too (`compono.builtin.*`, `compono.markdown.*`), and the sets derive from them:
-
-```go
-themecore.Builtins()         // "LINK", "IMAGE", "NAV", …
-themecore.MarkdownElements() // "heading", "p", "br", …
-```
+The built-ins and Markdown elements open to themes are rows too (`compono.builtin.*`, `compono.markdown.*`), and the sets derive from them: `LINK`, `IMAGE`, `NAV` and the other built-ins, `heading`, `p`, `br` and the other Markdown elements.
 
 Address validation, the detectors and the undefined call rule look only at these sets, not at Compono's lists, so a built-in Compono adds stays closed to themes until its row is added. A built-in detector looks for a reference in `contract.toml` that resolves to the built-in (a call, a value or a default) and for an address of `attributes.toml` whose type filter is it. A name the contract defines as a component, in `[[components]]` or as a local, is never a built-in. A Markdown detector looks for the element in `contract.toml`. The place of a signal in `contract.toml` is the key of the source and the line in it, such as `contract.toml:layouts[0].source:4`.
 
@@ -233,6 +228,16 @@ The detectors that read `contract.toml` depend on how Compono parses it. `themec
 ```go
 func TestDetectorCorpus(t *testing.T) {
 	if err := themecore.DetectorCorpus(); err != nil {
+		t.Fatal(err)
+	}
+}
+```
+
+Go's version selection can also give a program a newer Compono than the one `themecore` is tested with. A built-in or Markdown element of the sets that this Compono no longer has is a removal without a break row. `BuiltinSet` returns an error for it; Compono's extra names are allowed and stay closed to themes. A program that builds `themecore` in calls it in its tests too:
+
+```go
+func TestBuiltinSet(t *testing.T) {
+	if err := themecore.BuiltinSet(); err != nil {
 		t.Fatal(err)
 	}
 }
