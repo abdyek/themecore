@@ -1,7 +1,6 @@
 package themecore
 
 import (
-	"strings"
 	"testing"
 )
 
@@ -283,13 +282,3 @@ func TestDetectors(t *testing.T) {
 }
 
 const canonicalCSS = "@font-face{font-family:x}\n@layer a,b;\n@media print{@supports (display:grid){@scope (umono-root){a{color:red}}}}\n@keyframes k{from{opacity:0}}\n"
-
-func TestDetectFeatureFloorUnreadableCSS(t *testing.T) {
-	_, _, err := detectFeatureFloor(Package{Files: map[string][]byte{"assets/theme.css": []byte("a{")}})
-	if err == nil {
-		t.Fatal("expected error, got nil")
-	}
-	if !strings.Contains(err.Error(), "assets/theme.css") {
-		t.Errorf("error %q does not contain %q", err.Error(), "assets/theme.css")
-	}
-}

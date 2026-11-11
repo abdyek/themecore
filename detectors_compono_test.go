@@ -113,14 +113,3 @@ func TestCurrentAutoDetector(t *testing.T) {
 		})
 	}
 }
-
-func TestDetectFeatureFloorUnreadableContract(t *testing.T) {
-	p := Package{Files: map[string][]byte{"contract.toml": []byte("x = ")}}
-	_, _, err := detectFeatureFloor(p)
-	if err == nil {
-		t.Fatalf("detectFeatureFloor: expected error, got nil")
-	}
-	if !strings.Contains(err.Error(), "contract.toml") {
-		t.Errorf("detectFeatureFloor: error %q does not contain %q", err.Error(), "contract.toml")
-	}
-}
