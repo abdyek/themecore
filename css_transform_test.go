@@ -5,8 +5,15 @@ import (
 	"testing"
 )
 
-func TestTransformExample(t *testing.T) {
-	in := `@charset "UTF-8";
+func TestTransform(t *testing.T) {
+	cases := []struct {
+		name string
+		in   string
+		want string
+	}{
+		{
+			name: "example",
+			in: `@charset "UTF-8";
 @font-face { font-family: "acme-inter"; src: url(fonts/inter.woff2) format("woff2"); }
 @layer base, components;
 
@@ -19,28 +26,19 @@ h1 { font-family: "acme-inter", sans-serif; }
 @layer components {
   .card { padding: 1rem; }
 }
-`
-	want := `@font-face{font-family:"acme-inter";src:url(fonts/inter.woff2) format("woff2")}
+`,
+			want: `@font-face{font-family:"acme-inter";src:url(fonts/inter.woff2) format("woff2")}
 @layer base,components;
 @scope (umono-root){:scope.layout-post{max-width:60rem}h1{font-family:"acme-inter",sans-serif}}
 @media (min-width:48rem){@scope (umono-root){:scope>nav{display:flex}}}
 @layer components{@scope (umono-root){.card{padding:1rem}}}
-`
-	out, err := transform([]byte(in))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if string(out) != want {
-		t.Errorf("mismatch:\n got: %q\nwant: %q", string(out), want)
-	}
-}
-
-func TestTransform(t *testing.T) {
-	cases := []struct {
-		name string
-		in   string
-		want string
-	}{
+`,
+		},
+		{
+			name: "details recipe",
+			in:   validStylesheets[0],
+			want: "@media (min-width:48rem){@supports selector(::details-content){@scope (umono-root){nav>details>summary{display:none}nav>details::details-content{content-visibility:visible}}}}\n",
+		},
 		{
 			name: "empty",
 			in:   "",
@@ -249,6 +247,10 @@ func TestVerify(t *testing.T) {
 			name: "empty scope block",
 			in:   `@scope (umono-root){}`,
 		},
+		{
+			name: "scope and pseudo-element",
+			in:   `@scope (umono-root){:scope>nav,p::before{color:red}}`,
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -329,6 +331,26 @@ func TestVerifyRejects(t *testing.T) {
 			name: "parse error",
 			in:   `@scope (umono-root){a{color:red}`,
 			want: "unclosed block",
+		},
+		{
+			name: "html selector",
+			in:   `@scope (umono-root){html{color:red}}`,
+			want: "html is not allowed",
+		},
+		{
+			name: "absolute url",
+			in:   `@scope (umono-root){a{background:url(/a.png)}}`,
+			want: "must be a relative path to a file in assets/",
+		},
+		{
+			name: "disallowed function",
+			in:   `@scope (umono-root){a{width:env(x)}}`,
+			want: "function env() is not allowed",
+		},
+		{
+			name: "letters in content",
+			in:   `@scope (umono-root){a::before{content:"x" / ""}}`,
+			want: "strings in content must not contain letters",
 		},
 	}
 	for _, tc := range cases {

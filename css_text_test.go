@@ -68,11 +68,3 @@ func TestGeneratedTextRejected(t *testing.T) {
 		})
 	}
 }
-
-func TestGeneratedTextVerify(t *testing.T) {
-	css := `@scope (umono-root){a::before{content:"x" / ""}}`
-	want := "strings in content must not contain letters"
-	if err := verify([]byte(css)); err == nil || !strings.Contains(err.Error(), want) {
-		t.Fatalf("verify(%q) error = %v, want error containing %q", css, err, want)
-	}
-}

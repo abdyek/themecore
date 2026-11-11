@@ -141,6 +141,7 @@ func TestSupportsRejected(t *testing.T) {
 		{`(display)`, `invalid @supports condition`},
 		{`(display:)`, `invalid @supports condition`},
 		{`not not (a: b)`, `invalid @supports condition`},
+		{``, `invalid @supports condition`},
 	}
 	for _, c := range cases {
 		t.Run(c.prelude, func(t *testing.T) {
@@ -153,13 +154,4 @@ func TestSupportsRejected(t *testing.T) {
 			}
 		})
 	}
-	t.Run("", func(t *testing.T) {
-		_, err := transform([]byte("@supports{a{color:red}}"))
-		if err == nil {
-			t.Fatalf(`expected error containing "invalid @supports condition", got nil`)
-		}
-		if !strings.Contains(err.Error(), "invalid @supports condition") {
-			t.Fatalf(`expected error containing "invalid @supports condition", got %q`, err.Error())
-		}
-	})
 }

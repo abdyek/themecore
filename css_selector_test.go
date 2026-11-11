@@ -170,20 +170,3 @@ func TestSelectorsRejected(t *testing.T) {
 		})
 	}
 }
-
-func TestSelectorsVerify(t *testing.T) {
-	t.Run("html not allowed", func(t *testing.T) {
-		err := verify([]byte(`@scope (umono-root){html{color:red}}`))
-		if err == nil {
-			t.Fatalf("expected error containing %q, got nil", "html is not allowed")
-		}
-		if !strings.Contains(err.Error(), "html is not allowed") {
-			t.Fatalf("expected error containing %q, got %q", "html is not allowed", err.Error())
-		}
-	})
-	t.Run("scope and pseudo-element accepted", func(t *testing.T) {
-		if err := verify([]byte(`@scope (umono-root){:scope>nav,p::before{color:red}}`)); err != nil {
-			t.Fatalf("unexpected error: %v", err)
-		}
-	})
-}

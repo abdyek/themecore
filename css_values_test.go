@@ -99,13 +99,3 @@ func TestValuesRejected(t *testing.T) {
 		})
 	}
 }
-
-func TestValuesVerify(t *testing.T) {
-	css := []byte(`@scope (umono-root){a{width:env(x)}}`)
-	want := "function env() is not allowed"
-	if err := verify(css); err == nil {
-		t.Fatalf("verify(%q) returned nil error, want containing %q", css, want)
-	} else if !strings.Contains(err.Error(), want) {
-		t.Fatalf("verify(%q) error = %q, want containing %q", css, err.Error(), want)
-	}
-}
