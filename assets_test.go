@@ -11,11 +11,14 @@ func sig(prefix string, n int) []byte {
 	return append(b, make([]byte, n)...)
 }
 
+var (
+	pngData   = append([]byte("\x89PNG\r\n\x1a\n"), make([]byte, 8)...)
+	jpegData  = append([]byte("\xff\xd8\xff\xe0"), make([]byte, 8)...)
+	woff2Data = sig("wOF2", 8)
+	woffData  = sig("wOFF", 8)
+)
+
 func TestCheckAssetsAccepts(t *testing.T) {
-	woff2Data := sig("wOF2", 8)
-	woffData := sig("wOFF", 8)
-	pngData := append([]byte("\x89PNG\r\n\x1a\n"), make([]byte, 8)...)
-	jpegData := append([]byte("\xff\xd8\xff\xe0"), make([]byte, 8)...)
 	webpData := []byte("RIFF\x00\x00\x00\x00WEBPVP8 ")
 	avifMajorData := []byte("\x00\x00\x00\x18ftypavif\x00\x00\x00\x00mif1miaf")
 	avifCompatData := []byte("\x00\x00\x00\x18ftypmif1\x00\x00\x00\x00miafavif")
@@ -48,10 +51,6 @@ func TestCheckAssetsAccepts(t *testing.T) {
 }
 
 func TestCheckAssetsRejects(t *testing.T) {
-	pngData := append([]byte("\x89PNG\r\n\x1a\n"), make([]byte, 8)...)
-	jpegData := append([]byte("\xff\xd8\xff\xe0"), make([]byte, 8)...)
-	woff2Data := sig("wOF2", 8)
-	woffData := sig("wOFF", 8)
 	avifHeicData := []byte("\x00\x00\x00\x18ftypheic\x00\x00\x00\x00mif1heic")
 	avifLargeBoxData := []byte("\x00\x00\x00\x40ftypavif\x00\x00\x00\x00")
 	avifShortData := []byte("\x00\x00\x00\x18ftyp")

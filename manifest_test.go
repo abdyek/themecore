@@ -11,16 +11,9 @@ func ptr(s string) *string {
 	return &s
 }
 
-func manifestDoc(set map[string]string, extra string) string {
-	base := []struct {
-		key, value string
-	}{
-		{"schema", `"https://umono.dev/schemas/theme-manifest/v1"`},
-		{"id", `"acme/minimal"`},
-		{"contract", `"umono/e-commerce@v1.0"`},
-		{"name", `"Minimal E-commerce"`},
-		{"version", `"0.1.0"`},
-	}
+type docKey struct{ key, value string }
+
+func tomlDoc(base []docKey, set map[string]string, extra string) string {
 	baseKeys := make(map[string]struct{}, len(base))
 	for _, b := range base {
 		baseKeys[b.key] = struct{}{}
@@ -66,8 +59,26 @@ func manifestDoc(set map[string]string, extra string) string {
 	return sb.String()
 }
 
-func TestParseManifestExample(t *testing.T) {
-	doc := `schema = "https://umono.dev/schemas/theme-manifest/v1"
+func manifestDoc(set map[string]string, extra string) string {
+	base := []docKey{
+		{"schema", `"https://umono.dev/schemas/theme-manifest/v1"`},
+		{"id", `"acme/minimal"`},
+		{"contract", `"umono/e-commerce@v1.0"`},
+		{"name", `"Minimal E-commerce"`},
+		{"version", `"0.1.0"`},
+	}
+	return tomlDoc(base, set, extra)
+}
+
+func TestParseManifest(t *testing.T) {
+	cases := []struct {
+		name string
+		doc  string
+		want Manifest
+	}{
+		{
+			name: "example",
+			doc: `schema = "https://umono.dev/schemas/theme-manifest/v1"
 id = "acme/minimal"
 contract = "umono/e-commerce@v1.0"
 name = "Minimal E-commerce"
@@ -80,98 +91,46 @@ repository = "https://example.com/minimal.git"
 [[authors]]
 name = "Acme"
 url = "https://example.com"
-`
-	m, err := ParseManifest([]byte(doc))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	want := Manifest{
-		Schema:      "https://umono.dev/schemas/theme-manifest/v1",
-		ID:          "acme/minimal",
-		Contract:    "umono/e-commerce@v1.0",
-		Name:        "Minimal E-commerce",
-		Version:     "0.1.0",
-		Description: ptr("Clean e-commerce theme for Umono."),
-		License:     ptr("MIT"),
-		Homepage:    ptr("https://example.com/minimal"),
-		Repository:  ptr("https://example.com/minimal.git"),
-		Authors:     []Author{{Name: "Acme", URL: ptr("https://example.com")}},
-	}
-	if !reflect.DeepEqual(m, want) {
-		t.Fatalf("manifest mismatch:\n got: %#v\nwant: %#v", m, want)
-	}
-}
-
-func TestParseManifestMinimal(t *testing.T) {
-	doc := manifestDoc(nil, "")
-	m, err := ParseManifest([]byte(doc))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if m.Description != nil {
-		t.Errorf("Description: got %v, want nil", *m.Description)
-	}
-	if m.License != nil {
-		t.Errorf("License: got %v, want nil", *m.License)
-	}
-	if m.Homepage != nil {
-		t.Errorf("Homepage: got %v, want nil", *m.Homepage)
-	}
-	if m.Repository != nil {
-		t.Errorf("Repository: got %v, want nil", *m.Repository)
-	}
-	if m.Authors != nil {
-		t.Errorf("Authors: got %v, want nil", m.Authors)
-	}
-}
-
-func TestParseManifestLicense(t *testing.T) {
-	cases := []struct {
-		expr    string
-		wantErr string
-	}{
-		{"MIT", ""},
-		{"MIT OR Apache-2.0", ""},
-		{"LicenseRef-Acme", ""},
-		{"(MIT AND BSD-3-Clause) OR Apache-2.0", ""},
-		{"GPL-2.0-or-later WITH Classpath-exception-2.0", ""},
-		{"GPL-2.0+", ""},
-		{"DocumentRef-spdx-tool-1.2:LicenseRef-MIT-Style-2", ""},
-		{"((MIT))", ""},
-		{"", "theme.toml: license: not a valid SPDX license expression"},
-		{"MIT OR", "theme.toml: license: not a valid SPDX license expression"},
-		{"MIT or Apache-2.0", "theme.toml: license: not a valid SPDX license expression"},
-		{"(MIT | MIT)", "theme.toml: license: not a valid SPDX license expression"},
-		{"MIT Apache-2.0", "theme.toml: license: not a valid SPDX license expression"},
-		{"(MIT OR Apache-2.0) WITH Classpath-exception-2.0", "theme.toml: license: not a valid SPDX license expression"},
-		{"MIT WITH", "theme.toml: license: not a valid SPDX license expression"},
-		{"AND", "theme.toml: license: not a valid SPDX license expression"},
-		{"MIT+ +", "theme.toml: license: not a valid SPDX license expression"},
-		{"LicenseRef-", "theme.toml: license: not a valid SPDX license expression"},
-		{"MIT  OR Apache-2.0", "theme.toml: license: not a valid SPDX license expression"},
-		{" MIT", "theme.toml: license: has leading or trailing whitespace"},
+`,
+			want: Manifest{
+				Schema:      "https://umono.dev/schemas/theme-manifest/v1",
+				ID:          "acme/minimal",
+				Contract:    "umono/e-commerce@v1.0",
+				Name:        "Minimal E-commerce",
+				Version:     "0.1.0",
+				Description: ptr("Clean e-commerce theme for Umono."),
+				License:     ptr("MIT"),
+				Homepage:    ptr("https://example.com/minimal"),
+				Repository:  ptr("https://example.com/minimal.git"),
+				Authors:     []Author{{Name: "Acme", URL: ptr("https://example.com")}},
+			},
+		},
+		{
+			name: "minimal",
+			doc:  manifestDoc(nil, ""),
+			want: Manifest{
+				Schema:   "https://umono.dev/schemas/theme-manifest/v1",
+				ID:       "acme/minimal",
+				Contract: "umono/e-commerce@v1.0",
+				Name:     "Minimal E-commerce",
+				Version:  "0.1.0",
+			},
+		},
 	}
 	for _, c := range cases {
-		t.Run(c.expr, func(t *testing.T) {
-			doc := manifestDoc(map[string]string{"license": `"` + c.expr + `"`}, "")
-			_, err := ParseManifest([]byte(doc))
-			if c.wantErr == "" {
-				if err != nil {
-					t.Fatalf("expected no error, got %v", err)
-				}
-				return
+		t.Run(c.name, func(t *testing.T) {
+			m, err := ParseManifest([]byte(c.doc))
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
 			}
-			if err == nil {
-				t.Fatalf("expected error containing %q, got nil", c.wantErr)
-			}
-			if !strings.Contains(err.Error(), c.wantErr) {
-				t.Fatalf("expected error containing %q, got %q", c.wantErr, err.Error())
+			if !reflect.DeepEqual(m, c.want) {
+				t.Fatalf("manifest mismatch:\n got: %#v\nwant: %#v", m, c.want)
 			}
 		})
 	}
 }
 
-func TestParseManifestLengths(t *testing.T) {
+func TestParseManifestValues(t *testing.T) {
 	homepageBase := "https://example.com/" + strings.Repeat("a", 2048-20)
 	if got := len(homepageBase); got != 2048 {
 		t.Fatalf("homepage base length: got %d, want 2048", got)
@@ -189,6 +148,28 @@ func TestParseManifestLengths(t *testing.T) {
 		{"description over limit", "description", strings.Repeat("ş", 281), "theme.toml: description: longer than 280 characters"},
 		{"homepage at limit", "homepage", homepageBase, ""},
 		{"homepage over limit", "homepage", homepageBase + "a", "theme.toml: homepage: longer than 2048 bytes"},
+		{"license MIT", "license", "MIT", ""},
+		{"license MIT OR Apache-2.0", "license", "MIT OR Apache-2.0", ""},
+		{"license LicenseRef-Acme", "license", "LicenseRef-Acme", ""},
+		{"license (MIT AND BSD-3-Clause) OR Apache-2.0", "license", "(MIT AND BSD-3-Clause) OR Apache-2.0", ""},
+		{"license GPL-2.0-or-later WITH Classpath-exception-2.0", "license", "GPL-2.0-or-later WITH Classpath-exception-2.0", ""},
+		{"license GPL-2.0+", "license", "GPL-2.0+", ""},
+		{"license DocumentRef-spdx-tool-1.2:LicenseRef-MIT-Style-2", "license", "DocumentRef-spdx-tool-1.2:LicenseRef-MIT-Style-2", ""},
+		{"license ((MIT))", "license", "((MIT))", ""},
+		{"license ", "license", "", "theme.toml: license: not a valid SPDX license expression"},
+		{"license MIT OR", "license", "MIT OR", "theme.toml: license: not a valid SPDX license expression"},
+		{"license MIT or Apache-2.0", "license", "MIT or Apache-2.0", "theme.toml: license: not a valid SPDX license expression"},
+		{"license (MIT | MIT)", "license", "(MIT | MIT)", "theme.toml: license: not a valid SPDX license expression"},
+		{"license MIT Apache-2.0", "license", "MIT Apache-2.0", "theme.toml: license: not a valid SPDX license expression"},
+		{"license (MIT OR Apache-2.0) WITH Classpath-exception-2.0", "license", "(MIT OR Apache-2.0) WITH Classpath-exception-2.0", "theme.toml: license: not a valid SPDX license expression"},
+		{"license MIT WITH", "license", "MIT WITH", "theme.toml: license: not a valid SPDX license expression"},
+		{"license AND", "license", "AND", "theme.toml: license: not a valid SPDX license expression"},
+		{"license MIT+ +", "license", "MIT+ +", "theme.toml: license: not a valid SPDX license expression"},
+		{"license LicenseRef-", "license", "LicenseRef-", "theme.toml: license: not a valid SPDX license expression"},
+		{"license MIT  OR Apache-2.0", "license", "MIT  OR Apache-2.0", "theme.toml: license: not a valid SPDX license expression"},
+		{"license  MIT", "license", " MIT", "theme.toml: license: has leading or trailing whitespace"},
+		{"license (MIT", "license", "(MIT", "theme.toml: license: not a valid SPDX license expression"},
+		{"license MIT)", "license", "MIT)", "theme.toml: license: not a valid SPDX license expression"},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -250,8 +231,6 @@ email = "a@example.com"
 		{"version pre-release", map[string]string{"version": `"0.1.0-beta"`}, "", "theme.toml: version: must be MAJOR.MINOR.PATCH"},
 		{"version build metadata", map[string]string{"version": `"0.1.0+x"`}, "", "theme.toml: version: must be MAJOR.MINOR.PATCH"},
 		{"version missing", map[string]string{"version": "-"}, "", "theme.toml: version: missing"},
-		{"license open paren", map[string]string{"license": `"(MIT"`}, "", "theme.toml: license: not a valid SPDX license expression"},
-		{"license close paren", map[string]string{"license": `"MIT)"`}, "", "theme.toml: license: not a valid SPDX license expression"},
 		{"homepage http", map[string]string{"homepage": `"http://example.com"`}, "", "theme.toml: homepage: must be an absolute https URL"},
 		{"homepage no host", map[string]string{"homepage": `"https://"`}, "", "theme.toml: homepage: must be an absolute https URL"},
 		{"homepage relative", map[string]string{"homepage": `"example.com"`}, "", "theme.toml: homepage: must be an absolute https URL"},

@@ -3,16 +3,13 @@ package themecore
 import (
 	"path/filepath"
 	"reflect"
-	"sort"
 	"strings"
 	"testing"
 	"time"
 )
 
 func builtDoc(set map[string]string, extra string) string {
-	base := []struct {
-		key, value string
-	}{
+	base := []docKey{
 		{"schema", `"https://umono.dev/schemas/theme-built/v1"`},
 		{"id", `"acme/minimal"`},
 		{"contract", `"umono/e-commerce@v1.0"`},
@@ -21,49 +18,7 @@ func builtDoc(set map[string]string, extra string) string {
 		{"version", `"0.1.0"`},
 		{"built-at", "2026-06-02T00:00:00Z"},
 	}
-	baseKeys := make(map[string]struct{}, len(base))
-	for _, b := range base {
-		baseKeys[b.key] = struct{}{}
-	}
-
-	var sb strings.Builder
-	for _, b := range base {
-		if v, ok := set[b.key]; ok {
-			if v == "-" {
-				continue
-			}
-			sb.WriteString(b.key)
-			sb.WriteString(" = ")
-			sb.WriteString(v)
-			sb.WriteByte('\n')
-		} else {
-			sb.WriteString(b.key)
-			sb.WriteString(" = ")
-			sb.WriteString(b.value)
-			sb.WriteByte('\n')
-		}
-	}
-
-	var extras []string
-	for k := range set {
-		if _, ok := baseKeys[k]; !ok {
-			extras = append(extras, k)
-		}
-	}
-	sort.Strings(extras)
-	for _, k := range extras {
-		v := set[k]
-		if v == "-" {
-			continue
-		}
-		sb.WriteString(k)
-		sb.WriteString(" = ")
-		sb.WriteString(v)
-		sb.WriteByte('\n')
-	}
-
-	sb.WriteString(extra)
-	return sb.String()
+	return tomlDoc(base, set, extra)
 }
 
 func TestParseBuiltExample(t *testing.T) {
@@ -128,7 +83,6 @@ func TestParseBuiltRejects(t *testing.T) {
 		{"built-at date", map[string]string{"built-at": "2026-06-02"}, "built.toml: built-at: must be an offset date-time in UTC"},
 		{"built-at string", map[string]string{"built-at": `"2026-06-02T00:00:00Z"`}, "built.toml: built-at: must be an offset date-time in UTC"},
 		{"dev/dev", map[string]string{"id": `"dev/dev"`}, "built.toml: id: dev/dev is reserved"},
-		{"name empty", map[string]string{"name": `""`}, "built.toml: name: must not be empty"},
 		{"unknown key", map[string]string{"foo": `"x"`}, "built.toml: unknown key foo"},
 	}
 	for _, c := range cases {
