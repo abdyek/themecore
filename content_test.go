@@ -50,28 +50,6 @@ func buildRawZip(t *testing.T, entries ...zipEntry) []byte {
 	return buf.Bytes()
 }
 
-func TestReadZipAcceptsAllowedPaths(t *testing.T) {
-	files := map[string][]byte{
-		"built.toml":                        []byte("x"),
-		"contract.toml":                     []byte("x"),
-		"checksums.json":                    []byte("x"),
-		"attributes.toml":                   []byte("x"),
-		"LICENSE":                           []byte("x"),
-		"assets/theme.css":                  []byte("x"),
-		"assets/fonts/inter-v4.woff2":       []byte("x"),
-		"assets/a_b.c-d.png":                []byte("x"),
-		"assets/" + strings.Repeat("a", 64): []byte("x"),
-	}
-	b := buildZip(t, files, "assets/", "assets/fonts/")
-	pkg, err := readZip(t, b)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if len(pkg.Files) != 9 {
-		t.Errorf("got %d files, want 9", len(pkg.Files))
-	}
-}
-
 func TestReadZipRejectsPaths(t *testing.T) {
 	cases := []struct {
 		path string

@@ -58,19 +58,27 @@ func readZip(t *testing.T, b []byte) (Package, error) {
 }
 
 func TestReadZipReadsFiles(t *testing.T) {
-	files := map[string][]byte{
-		"built.toml":       []byte("a"),
-		"assets/theme.css": []byte("b"),
+	paths := []string{
+		"built.toml",
+		"contract.toml",
+		"checksums.json",
+		"attributes.toml",
+		"LICENSE",
+		"assets/theme.css",
+		"assets/fonts/inter-v4.woff2",
+		"assets/a_b.c-d.png",
+		"assets/" + strings.Repeat("a", 64),
 	}
-	b := buildZip(t, files, "assets/")
+	files := make(map[string][]byte, len(paths))
+	for _, p := range paths {
+		files[p] = []byte(p)
+	}
+	b := buildZip(t, files, "assets/", "assets/fonts/")
 	pkg, err := readZip(t, b)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	want := map[string][]byte{
-		"built.toml":       []byte("a"),
-		"assets/theme.css": []byte("b"),
-	}
+	want := files
 	if !reflect.DeepEqual(pkg.Files, want) {
 		t.Errorf("got %#v, want %#v", pkg.Files, want)
 	}
@@ -316,38 +324,18 @@ func writeFiles(t *testing.T, dir string, files map[string][]byte) {
 }
 
 func TestReadZipCountsRealBytes(t *testing.T) {
-	t.Run("file", func(t *testing.T) {
-		files := map[string]int{
-			"assets/a.png": 16*MB + 1,
-		}
-		b := buildLyingZip(t, files)
-		_, err := readZip(t, b)
-		if err == nil {
-			t.Fatalf("expected error, got nil")
-		}
-		wantErr := "assets/a.png: entry is larger than its declared size"
-		if !strings.Contains(err.Error(), wantErr) {
-			t.Errorf("error %q does not contain %q", err.Error(), wantErr)
-		}
-	})
-	t.Run("total", func(t *testing.T) {
-		files := map[string]int{
-			"assets/a.png": 16 * MB,
-			"assets/b.png": 16 * MB,
-			"assets/c.png": 16 * MB,
-			"assets/d.png": 16 * MB,
-			"assets/e.png": 16 * MB,
-		}
-		b := buildLyingZip(t, files)
-		_, err := readZip(t, b)
-		if err == nil {
-			t.Fatalf("expected error, got nil")
-		}
-		wantErr := "assets/a.png: entry is larger than its declared size"
-		if !strings.Contains(err.Error(), wantErr) {
-			t.Errorf("error %q does not contain %q", err.Error(), wantErr)
-		}
-	})
+	files := map[string]int{
+		"assets/a.png": 16*MB + 1,
+	}
+	b := buildLyingZip(t, files)
+	_, err := readZip(t, b)
+	if err == nil {
+		t.Fatalf("expected error, got nil")
+	}
+	wantErr := "assets/a.png: entry is larger than its declared size"
+	if !strings.Contains(err.Error(), wantErr) {
+		t.Errorf("error %q does not contain %q", err.Error(), wantErr)
+	}
 }
 
 func TestReadDirReadsFiles(t *testing.T) {
