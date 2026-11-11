@@ -5,12 +5,45 @@ on:
   push:
     branches: [main]
 
+permissions:
+  contents: read
+
 jobs:
   test:
     runs-on: ubuntu-latest
+    outputs:
+      coverage: ${{ steps.coverage.outputs.total }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
-      - run: go test ./...
+      - run: go test -coverprofile=coverage.out ./...
+      - id: coverage
+        run: echo "total=$(go tool cover -func=coverage.out | awk '$1 == "total:" { print $NF }')" >> "$GITHUB_OUTPUT"
+
+  # The badge is kept as the only commit of the orphan branch badges, so
+  # updating it adds no commit to main. It shows the coverage and sets no
+  # threshold: a drop never fails this workflow.
+  coverage-badge:
+    if: github.event_name == 'push'
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    concurrency: coverage-badge
+    steps:
+      - uses: actions/checkout@v4
+      - run: .github/coverage-badge.sh "$COVERAGE" > "$RUNNER_TEMP/coverage.svg"
+        env:
+          COVERAGE: ${{ needs.test.outputs.coverage }}
+      - run: |
+          git checkout --orphan badges
+          git rm -rfq .
+          cp "$RUNNER_TEMP/coverage.svg" coverage.svg
+          git add coverage.svg
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' \
+            commit -qm "Update the coverage badge to $COVERAGE"
+          git push --force origin badges
+        env:
+          COVERAGE: ${{ needs.test.outputs.coverage }}
