@@ -1,5 +1,7 @@
 # themecore
 
+[![coverage](https://raw.githubusercontent.com/umono-cms/themecore/badges/coverage.svg)](https://github.com/umono-cms/themecore/actions/workflows/test.yml?query=branch%3Amain)
+
 `themecore` is the shared Go package of the [Umono](https://github.com/umono-cms/umono) theme system. The Umono runtime and the Umono CLI embed it, so a theme is checked by the same rules when it is built, installed and activated.
 
 > **Status:** under development for Umono v0.9. The API is not stable yet.
