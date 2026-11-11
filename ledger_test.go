@@ -50,6 +50,64 @@ func TestThemeAPIArithmetic(t *testing.T) {
 	}
 }
 
+func TestLedgerRows(t *testing.T) {
+	want := []string{
+		"pkg.attributes",
+		"attr.class",
+		"attr.sizes",
+		"attr.address.layout",
+		"attr.address.layout-builtin",
+		"attr.address.layout-component-builtin",
+		"pkg.license",
+		"assets.woff2",
+		"assets.woff",
+		"assets.png",
+		"assets.jpeg",
+		"assets.jpg",
+		"assets.webp",
+		"assets.avif",
+		"assets.gif",
+		"css.at.media",
+		"css.at.supports",
+		"css.at.layer",
+		"css.at.font-face",
+		"css.at.keyframes",
+		"compono.builtin.link",
+		"compono.builtin.image",
+		"compono.builtin.nav",
+		"compono.builtin.list",
+		"compono.builtin.details",
+		"compono.builtin.header",
+		"compono.builtin.main",
+		"compono.builtin.footer",
+		"compono.builtin.article",
+		"compono.builtin.aside",
+		"compono.markdown.heading",
+		"compono.markdown.p",
+		"compono.markdown.br",
+		"compono.markdown.em",
+		"compono.markdown.strong",
+		"compono.markdown.link",
+		"compono.markdown.inline-code",
+		"compono.markdown.code-block",
+		"compono.markdown.list",
+		"compono.markdown.blockquote",
+		"compono.markdown.hr",
+		"compono.markdown.table",
+	}
+	if len(featureRows) < len(want) {
+		t.Fatalf("expected at least %d features, got %d", len(want), len(featureRows))
+	}
+	for i, id := range want {
+		if featureRows[i].ID != id {
+			t.Errorf("featureRows[%d].ID = %q, want %q", i, featureRows[i].ID, id)
+		}
+		if featureRows[i].IntroducedIn != 1 {
+			t.Errorf("featureRows[%d] %q IntroducedIn = %d, want 1", i, id, featureRows[i].IntroducedIn)
+		}
+	}
+}
+
 func TestLedgerInvariants(t *testing.T) {
 	seen := make(map[string]int)
 	for i, f := range featureRows {

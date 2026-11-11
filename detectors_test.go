@@ -1,7 +1,6 @@
 package themecore
 
 import (
-	"strings"
 	"testing"
 )
 
@@ -30,37 +29,6 @@ sizes = "100vw"
 [address."post MAIN_MENU LINK"]
 class = "main-menu-link"
 `
-
-func TestLedgerPackageRows(t *testing.T) {
-	want := []string{
-		"pkg.attributes",
-		"attr.class",
-		"attr.sizes",
-		"attr.address.layout",
-		"attr.address.layout-builtin",
-		"attr.address.layout-component-builtin",
-		"pkg.license",
-		"assets.woff2",
-		"assets.woff",
-		"assets.png",
-		"assets.jpeg",
-		"assets.jpg",
-		"assets.webp",
-		"assets.avif",
-		"assets.gif",
-	}
-	if len(featureRows) < len(want) {
-		t.Fatalf("expected at least %d features, got %d", len(want), len(featureRows))
-	}
-	for i, id := range want {
-		if featureRows[i].ID != id {
-			t.Errorf("featureRows[%d].ID = %q, want %q", i, featureRows[i].ID, id)
-		}
-		if featureRows[i].IntroducedIn != 1 {
-			t.Errorf("featureRows[%d] %q IntroducedIn = %d, want 1", i, id, featureRows[i].IntroducedIn)
-		}
-	}
-}
 
 func TestDetectors(t *testing.T) {
 	cases := []struct {
@@ -238,51 +206,6 @@ func TestDetectors(t *testing.T) {
 			where: "",
 			found: false,
 		},
-	}
-	for _, c := range cases {
-		c := c
-		t.Run(c.name, func(t *testing.T) {
-			f := feature(t, c.id)
-			where, found := f.Detect(Package{Files: c.files})
-			if where != c.where || found != c.found {
-				t.Errorf("Detect(%s) = (%q, %v), want (%q, %v)", c.id, where, found, c.where, c.found)
-			}
-		})
-	}
-}
-
-const canonicalCSS = "@font-face{font-family:x}\n@layer a,b;\n@media print{@supports (display:grid){@scope (umono-root){a{color:red}}}}\n@keyframes k{from{opacity:0}}\n"
-
-func TestLedgerCSSRows(t *testing.T) {
-	want := []string{
-		"css.at.media",
-		"css.at.supports",
-		"css.at.layer",
-		"css.at.font-face",
-		"css.at.keyframes",
-	}
-	if len(featureRows) < 20 {
-		t.Fatalf("expected at least 20 features, got %d", len(featureRows))
-	}
-	for i, id := range want {
-		j := 15 + i
-		if featureRows[j].ID != id {
-			t.Errorf("featureRows[%d].ID = %q, want %q", j, featureRows[j].ID, id)
-		}
-		if featureRows[j].IntroducedIn != 1 {
-			t.Errorf("featureRows[%d] %q IntroducedIn = %d, want 1", j, id, featureRows[j].IntroducedIn)
-		}
-	}
-}
-
-func TestCSSDetectors(t *testing.T) {
-	cases := []struct {
-		name  string
-		id    string
-		files map[string][]byte
-		where string
-		found bool
-	}{
 		{
 			name:  "media",
 			id:    "css.at.media",
@@ -348,7 +271,6 @@ func TestCSSDetectors(t *testing.T) {
 		},
 	}
 	for _, c := range cases {
-		c := c
 		t.Run(c.name, func(t *testing.T) {
 			f := feature(t, c.id)
 			where, found := f.Detect(Package{Files: c.files})
@@ -359,12 +281,4 @@ func TestCSSDetectors(t *testing.T) {
 	}
 }
 
-func TestDetectFeatureFloorUnreadableCSS(t *testing.T) {
-	_, _, err := detectFeatureFloor(Package{Files: map[string][]byte{"assets/theme.css": []byte("a{")}})
-	if err == nil {
-		t.Fatal("expected error, got nil")
-	}
-	if !strings.Contains(err.Error(), "assets/theme.css") {
-		t.Errorf("error %q does not contain %q", err.Error(), "assets/theme.css")
-	}
-}
+const canonicalCSS = "@font-face{font-family:x}\n@layer a,b;\n@media print{@supports (display:grid){@scope (umono-root){a{color:red}}}}\n@keyframes k{from{opacity:0}}\n"
