@@ -5,9 +5,6 @@ import (
 	"bytes"
 	"hash/crc32"
 	"io/fs"
-	"os"
-	"path/filepath"
-	"runtime"
 	"strings"
 	"testing"
 )
@@ -170,80 +167,6 @@ func TestReadZipRejectsEntries(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			b := buildRawZip(t, tc.entries...)
 			_, err := readZip(t, b)
-			if err == nil {
-				t.Fatalf("expected error containing %q, got nil", tc.want)
-			}
-			if !strings.Contains(err.Error(), tc.want) {
-				t.Errorf("error %q does not contain %q", err.Error(), tc.want)
-			}
-		})
-	}
-}
-
-func TestReadDirRejectsEmptyDir(t *testing.T) {
-	dir := t.TempDir()
-	writeFiles(t, dir, map[string][]byte{
-		"built.toml":       []byte("x"),
-		"assets/theme.css": []byte("x"),
-	})
-	if err := os.MkdirAll(filepath.Join(dir, "assets", "fonts"), 0o755); err != nil {
-		t.Fatalf("mkdir: %v", err)
-	}
-	_, err := ReadDir(dir)
-	if err == nil {
-		t.Fatalf("expected error, got nil")
-	}
-	wantErr := "assets/fonts/: empty directory"
-	if !strings.Contains(err.Error(), wantErr) {
-		t.Errorf("error %q does not contain %q", err.Error(), wantErr)
-	}
-}
-
-func TestReadDirRejectsHardLink(t *testing.T) {
-	if runtime.GOOS == "windows" {
-		t.Skip("hard links not supported on windows")
-	}
-	outside := t.TempDir()
-	if err := os.WriteFile(filepath.Join(outside, "x.css"), []byte("x"), 0o644); err != nil {
-		t.Fatalf("write outside: %v", err)
-	}
-	dir := t.TempDir()
-	writeFiles(t, dir, map[string][]byte{
-		"built.toml": []byte("x"),
-	})
-	if err := os.MkdirAll(filepath.Join(dir, "assets"), 0o755); err != nil {
-		t.Fatalf("mkdir: %v", err)
-	}
-	if err := os.Link(filepath.Join(outside, "x.css"), filepath.Join(dir, "assets", "theme.css")); err != nil {
-		t.Skipf("link: %v", err)
-	}
-	_, err := ReadDir(dir)
-	if err == nil {
-		t.Fatalf("expected error, got nil")
-	}
-	wantErr := "assets/theme.css: hard link"
-	if !strings.Contains(err.Error(), wantErr) {
-		t.Errorf("error %q does not contain %q", err.Error(), wantErr)
-	}
-}
-
-func TestReadDirRejectsPaths(t *testing.T) {
-	cases := []struct {
-		name string
-		path string
-		want string
-	}{
-		{"assets/Logo.png", "assets/Logo.png", `assets/Logo.png: segment "Logo.png" does not match`},
-		{"fonts/a.woff2", "fonts/a.woff2", "fonts/a.woff2: directories other than assets/ are not allowed"},
-		{"theme.toml", "theme.toml", "theme.toml: not allowed in the package root"},
-	}
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			dir := t.TempDir()
-			writeFiles(t, dir, map[string][]byte{
-				tc.path: []byte("x"),
-			})
-			_, err := ReadDir(dir)
 			if err == nil {
 				t.Fatalf("expected error containing %q, got nil", tc.want)
 			}

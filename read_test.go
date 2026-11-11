@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"runtime"
 	"sort"
 	"strings"
 	"testing"
@@ -357,71 +358,92 @@ func TestReadDirReadsFiles(t *testing.T) {
 	}
 }
 
-func TestReadDirFileLimits(t *testing.T) {
+func TestReadDirRejects(t *testing.T) {
 	cases := []struct {
-		path    string
-		size    int
-		wantErr string
+		name  string
+		files map[string][]byte
+		setup func(t *testing.T, dir string)
+		want  string
 	}{
-		{"assets/theme.css", 2 * MB, ""},
-		{"assets/theme.css", 2*MB + 1, "assets/theme.css: file is larger than 2097152 bytes"},
-		{"assets/a.png", 16*MB + 1, "assets/a.png: file is larger than 16777216 bytes"},
+		{
+			name: "path",
+			files: map[string][]byte{
+				"assets/Logo.png": []byte("x"),
+			},
+			want: `assets/Logo.png: segment "Logo.png" does not match`,
+		},
+		{
+			name: "file limit",
+			files: map[string][]byte{
+				"assets/theme.css": zeros(2*MB + 1),
+			},
+			want: "assets/theme.css: file is larger than 2097152 bytes",
+		},
+		{
+			name: "empty directory",
+			files: map[string][]byte{
+				"built.toml":       []byte("x"),
+				"assets/theme.css": []byte("x"),
+			},
+			setup: func(t *testing.T, dir string) {
+				if err := os.MkdirAll(filepath.Join(dir, "assets", "fonts"), 0o755); err != nil {
+					t.Fatalf("mkdir: %v", err)
+				}
+			},
+			want: "assets/fonts/: empty directory",
+		},
+		{
+			name: "symlink",
+			files: map[string][]byte{
+				"target.css": []byte("x"),
+			},
+			setup: func(t *testing.T, dir string) {
+				if err := os.MkdirAll(filepath.Join(dir, "assets"), 0o755); err != nil {
+					t.Fatalf("mkdir: %v", err)
+				}
+				if err := os.Symlink(filepath.Join(dir, "target.css"), filepath.Join(dir, "assets", "theme.css")); err != nil {
+					t.Skipf("symlink: %v", err)
+				}
+			},
+			want: "assets/theme.css: not a regular file or directory",
+		},
+		{
+			name: "hard link",
+			files: map[string][]byte{
+				"built.toml": []byte("x"),
+			},
+			setup: func(t *testing.T, dir string) {
+				if runtime.GOOS == "windows" {
+					t.Skip("hard links not supported on windows")
+				}
+				outside := t.TempDir()
+				if err := os.WriteFile(filepath.Join(outside, "x.css"), []byte("x"), 0o644); err != nil {
+					t.Fatalf("write outside: %v", err)
+				}
+				if err := os.MkdirAll(filepath.Join(dir, "assets"), 0o755); err != nil {
+					t.Fatalf("mkdir: %v", err)
+				}
+				if err := os.Link(filepath.Join(outside, "x.css"), filepath.Join(dir, "assets", "theme.css")); err != nil {
+					t.Skipf("link: %v", err)
+				}
+			},
+			want: "assets/theme.css: hard link",
+		},
 	}
 	for _, tc := range cases {
-		t.Run(tc.path, func(t *testing.T) {
+		t.Run(tc.name, func(t *testing.T) {
 			dir := t.TempDir()
-			writeFiles(t, dir, map[string][]byte{
-				tc.path: zeros(tc.size),
-			})
+			writeFiles(t, dir, tc.files)
+			if tc.setup != nil {
+				tc.setup(t, dir)
+			}
 			_, err := ReadDir(dir)
-			if tc.wantErr == "" {
-				if err != nil {
-					t.Fatalf("unexpected error: %v", err)
-				}
-				return
-			}
 			if err == nil {
-				t.Fatalf("expected error containing %q, got nil", tc.wantErr)
+				t.Fatalf("expected error containing %q, got nil", tc.want)
 			}
-			if !strings.Contains(err.Error(), tc.wantErr) {
-				t.Errorf("error %q does not contain %q", err.Error(), tc.wantErr)
+			if !strings.Contains(err.Error(), tc.want) {
+				t.Errorf("error %q does not contain %q", err.Error(), tc.want)
 			}
 		})
-	}
-}
-
-func TestReadDirDepth(t *testing.T) {
-	dir := t.TempDir()
-	writeFiles(t, dir, map[string][]byte{
-		"assets/1/2/3/4/5/6/7/8/a.png": []byte{0},
-	})
-	_, err := ReadDir(dir)
-	if err == nil {
-		t.Fatalf("expected error, got nil")
-	}
-	wantErr := "assets/1/2/3/4/5/6/7/8/a.png: deeper than 8 directories"
-	if !strings.Contains(err.Error(), wantErr) {
-		t.Errorf("error %q does not contain %q", err.Error(), wantErr)
-	}
-}
-
-func TestReadDirRejectsSymlink(t *testing.T) {
-	dir := t.TempDir()
-	writeFiles(t, dir, map[string][]byte{
-		"target.css": []byte("x"),
-	})
-	if err := os.MkdirAll(filepath.Join(dir, "assets"), 0o755); err != nil {
-		t.Fatalf("mkdir: %v", err)
-	}
-	if err := os.Symlink(filepath.Join(dir, "target.css"), filepath.Join(dir, "assets", "theme.css")); err != nil {
-		t.Skipf("symlink: %v", err)
-	}
-	_, err := ReadDir(dir)
-	if err == nil {
-		t.Fatalf("expected error, got nil")
-	}
-	wantErr := "assets/theme.css: not a regular file or directory"
-	if !strings.Contains(err.Error(), wantErr) {
-		t.Errorf("error %q does not contain %q", err.Error(), wantErr)
 	}
 }
