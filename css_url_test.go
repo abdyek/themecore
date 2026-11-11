@@ -89,16 +89,6 @@ func TestURLsInvalidForm(t *testing.T) {
 	}
 }
 
-func TestURLsVerify(t *testing.T) {
-	css := `@scope (umono-root){a{background:url(/a.png)}}`
-	want := "must be a relative path to a file in assets/"
-	if err := verify([]byte(css)); err == nil {
-		t.Fatalf("expected error, got nil")
-	} else if !strings.Contains(err.Error(), want) {
-		t.Fatalf("error %q does not contain %q", err.Error(), want)
-	}
-}
-
 func TestCheckAssetURLs(t *testing.T) {
 	tests := []struct {
 		name  string

@@ -247,6 +247,10 @@ func TestVerify(t *testing.T) {
 			name: "empty scope block",
 			in:   `@scope (umono-root){}`,
 		},
+		{
+			name: "scope and pseudo-element",
+			in:   `@scope (umono-root){:scope>nav,p::before{color:red}}`,
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -327,6 +331,26 @@ func TestVerifyRejects(t *testing.T) {
 			name: "parse error",
 			in:   `@scope (umono-root){a{color:red}`,
 			want: "unclosed block",
+		},
+		{
+			name: "html selector",
+			in:   `@scope (umono-root){html{color:red}}`,
+			want: "html is not allowed",
+		},
+		{
+			name: "absolute url",
+			in:   `@scope (umono-root){a{background:url(/a.png)}}`,
+			want: "must be a relative path to a file in assets/",
+		},
+		{
+			name: "disallowed function",
+			in:   `@scope (umono-root){a{width:env(x)}}`,
+			want: "function env() is not allowed",
+		},
+		{
+			name: "letters in content",
+			in:   `@scope (umono-root){a::before{content:"x" / ""}}`,
+			want: "strings in content must not contain letters",
 		},
 	}
 	for _, tc := range cases {
