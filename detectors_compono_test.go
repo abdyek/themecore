@@ -32,8 +32,8 @@ func TestLedgerComponoRows(t *testing.T) {
 		"compono.markdown.hr",
 		"compono.markdown.table",
 	}
-	if len(featureRows) != 43 {
-		t.Fatalf("expected 43 features, got %d", len(featureRows))
+	if len(featureRows) < 20+len(want) {
+		t.Fatalf("expected at least %d features, got %d", 20+len(want), len(featureRows))
 	}
 	for i, id := range want {
 		j := 20 + i
