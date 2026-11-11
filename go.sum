@@ -10,8 +10,8 @@ github.com/tdewolff/parse/v2 v2.8.16 h1:bLk5svUOQRkW/Y2SJ+DeENSIkZBcTIkq+Atyv5D8
 github.com/tdewolff/parse/v2 v2.8.16/go.mod h1:XdsoSFThlVIRIajAuqz1evNY7bagZS8LBOPA3aVopwQ=
 github.com/tdewolff/test v1.0.12 h1:7F21DqIajswxuche0geHdrUZRCWE4oko4b7bcmkkrxk=
 github.com/tdewolff/test v1.0.12/go.mod h1:XPuWBzvdUzhCuxWO1ojpXsyzsA5bFoS3tO/Q3kFuTG8=
-github.com/umono-cms/compono v0.7.2-0.20261109173152-8d5773cb2e1c h1:YZHJ6Rfqj3tsLqseBlmVv18K9v6aQpHSeFBPwmX/8Ug=
-github.com/umono-cms/compono v0.7.2-0.20261109173152-8d5773cb2e1c/go.mod h1:xmv1PX8nrUAczVM/LYgGRC1mn9ryeutfA76oJNuaHNI=
+github.com/umono-cms/compono v0.8.0 h1:/CPZcY4UZzhSrW3y3yhnyT/OWOdanXlXcFk4t5dKfHI=
+github.com/umono-cms/compono v0.8.0/go.mod h1:xmv1PX8nrUAczVM/LYgGRC1mn9ryeutfA76oJNuaHNI=
 golang.org/x/net v0.38.0 h1:vRMAPTMaeGqVhG5QyLJHqNDwecKTomGeqbnfZyKlBI8=
 golang.org/x/net v0.38.0/go.mod h1:ivrbrMbzFq5J41QOQh0siUuly180yBYtLp+CKbEaFx8=
 gopkg.in/yaml.v3 v3.0.1 h1:fxVm/GzAzEWqLHuvctI91KS9hhNmmWOoWu0XTYJS7CA=
