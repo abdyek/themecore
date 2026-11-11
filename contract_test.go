@@ -3,68 +3,22 @@ package themecore
 import (
 	"errors"
 	"reflect"
-	"sort"
 	"strings"
 	"testing"
 )
 
 func contractDoc(head map[string]string, tables string) string {
-	base := []struct {
-		key, value string
-	}{
+	base := []docKey{
 		{"schema", `"https://umono.dev/schemas/theme-contract/v1"`},
 		{"id", `"example/blog"`},
 		{"version", `"v0.1"`},
 	}
-	baseKeys := make(map[string]struct{}, len(base))
-	for _, b := range base {
-		baseKeys[b.key] = struct{}{}
-	}
-
-	var sb strings.Builder
-	for _, b := range base {
-		if v, ok := head[b.key]; ok {
-			if v == "-" {
-				continue
-			}
-			sb.WriteString(b.key)
-			sb.WriteString(" = ")
-			sb.WriteString(v)
-			sb.WriteByte('\n')
-		} else {
-			sb.WriteString(b.key)
-			sb.WriteString(" = ")
-			sb.WriteString(b.value)
-			sb.WriteByte('\n')
-		}
-	}
-
-	var extras []string
-	for k := range head {
-		if _, ok := baseKeys[k]; !ok {
-			extras = append(extras, k)
-		}
-	}
-	sort.Strings(extras)
-	for _, k := range extras {
-		v := head[k]
-		if v == "-" {
-			continue
-		}
-		sb.WriteString(k)
-		sb.WriteString(" = ")
-		sb.WriteString(v)
-		sb.WriteByte('\n')
-	}
-
 	if tables == "" {
 		tables = `[[layouts]]
 id = "post"
 source = "# {{ title }}"`
 	}
-	sb.WriteByte('\n')
-	sb.WriteString(tables)
-	return sb.String()
+	return tomlDoc(base, head, "\n"+tables)
 }
 
 func layoutTable(lines ...string) string {
