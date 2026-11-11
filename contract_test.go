@@ -169,8 +169,9 @@ func TestParseContractRejects(t *testing.T) {
 	}
 }
 
-func TestParseContractRejectsSourceSyntaxErrors(t *testing.T) {
+func TestParseContractRejectsOutdated(t *testing.T) {
 	post := "id = " + string(rune(34)) + "post" + string(rune(34))
+	compA := "name = " + string(rune(34)) + "A" + string(rune(34))
 	cases := []struct {
 		name   string
 		tables string
@@ -195,6 +196,26 @@ func TestParseContractRejectsSourceSyntaxErrors(t *testing.T) {
 			name:   "invalid parameter definition in component",
 			tables: layoutTable(post, `source = 'x'`) + "\n\n" + componentTable(`name = "A"`, "source = '''\n~ y\n{{ y }}\n'''"),
 			want:   "contract.toml: components[0].source: 1:3: invalid-parameter-definition",
+		},
+		{
+			name:   "undefined call in layout",
+			tables: layoutTable(post, `source = '{{ NOPE }}'`),
+			want:   "contract.toml: layouts[0].source: 1:1: undefined component NOPE",
+		},
+		{
+			name:   "undefined value in layout",
+			tables: layoutTable(post, `source = '{{ A c = NOPE }}'`) + "\n\n" + componentTable(compA, "source = '''\n~ c = NO_MATTER\n{{ c }}\n'''"),
+			want:   "contract.toml: layouts[0].source: 1:10: undefined component NOPE",
+		},
+		{
+			name:   "local of another source",
+			tables: layoutTable(post, `source = '{{ X }}'`) + "\n\n" + componentTable(compA, "source = '''\nx\n\n~ X\ny\n'''"),
+			want:   "contract.toml: layouts[0].source: 1:1: undefined component X",
+		},
+		{
+			name:   "undefined call in component",
+			tables: layoutTable(post, `source = '{{ A }}'`) + "\n\n" + componentTable(compA, `source = '{{ NOPE }}'`),
+			want:   "contract.toml: components[0].source: 1:1: undefined component NOPE",
 		},
 	}
 	for _, tc := range cases {
@@ -235,51 +256,6 @@ func TestParseContractAccepts(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			if _, err := ParseContract([]byte(contractDoc(nil, tc.tables))); err != nil {
 				t.Fatalf("unexpected error: %v", err)
-			}
-		})
-	}
-}
-
-func TestParseContractRejectsUndefinedCalls(t *testing.T) {
-	post := "id = " + string(rune(34)) + "post" + string(rune(34))
-	compA := "name = " + string(rune(34)) + "A" + string(rune(34))
-	cases := []struct {
-		name   string
-		tables string
-		want   string
-	}{
-		{
-			name:   "undefined call in layout",
-			tables: layoutTable(post, `source = '{{ NOPE }}'`),
-			want:   "contract.toml: layouts[0].source: 1:1: undefined component NOPE",
-		},
-		{
-			name:   "undefined value in layout",
-			tables: layoutTable(post, `source = '{{ A c = NOPE }}'`) + "\n\n" + componentTable(compA, "source = '''\n~ c = NO_MATTER\n{{ c }}\n'''"),
-			want:   "contract.toml: layouts[0].source: 1:10: undefined component NOPE",
-		},
-		{
-			name:   "local of another source",
-			tables: layoutTable(post, `source = '{{ X }}'`) + "\n\n" + componentTable(compA, "source = '''\nx\n\n~ X\ny\n'''"),
-			want:   "contract.toml: layouts[0].source: 1:1: undefined component X",
-		},
-		{
-			name:   "undefined call in component",
-			tables: layoutTable(post, `source = '{{ A }}'`) + "\n\n" + componentTable(compA, `source = '{{ NOPE }}'`),
-			want:   "contract.toml: components[0].source: 1:1: undefined component NOPE",
-		},
-	}
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			_, err := ParseContract([]byte(contractDoc(nil, tc.tables)))
-			if err == nil {
-				t.Fatalf("expected error, got nil")
-			}
-			if !strings.Contains(err.Error(), tc.want) {
-				t.Errorf("error %q does not contain %q", err.Error(), tc.want)
-			}
-			if !errors.Is(err, ErrOutdated) {
-				t.Errorf("error %q does not wrap ErrOutdated", err.Error())
 			}
 		})
 	}
