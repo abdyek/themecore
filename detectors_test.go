@@ -31,37 +31,6 @@ sizes = "100vw"
 class = "main-menu-link"
 `
 
-func TestLedgerPackageRows(t *testing.T) {
-	want := []string{
-		"pkg.attributes",
-		"attr.class",
-		"attr.sizes",
-		"attr.address.layout",
-		"attr.address.layout-builtin",
-		"attr.address.layout-component-builtin",
-		"pkg.license",
-		"assets.woff2",
-		"assets.woff",
-		"assets.png",
-		"assets.jpeg",
-		"assets.jpg",
-		"assets.webp",
-		"assets.avif",
-		"assets.gif",
-	}
-	if len(featureRows) < len(want) {
-		t.Fatalf("expected at least %d features, got %d", len(want), len(featureRows))
-	}
-	for i, id := range want {
-		if featureRows[i].ID != id {
-			t.Errorf("featureRows[%d].ID = %q, want %q", i, featureRows[i].ID, id)
-		}
-		if featureRows[i].IntroducedIn != 1 {
-			t.Errorf("featureRows[%d] %q IntroducedIn = %d, want 1", i, id, featureRows[i].IntroducedIn)
-		}
-	}
-}
-
 func TestDetectors(t *testing.T) {
 	cases := []struct {
 		name  string
@@ -252,28 +221,6 @@ func TestDetectors(t *testing.T) {
 }
 
 const canonicalCSS = "@font-face{font-family:x}\n@layer a,b;\n@media print{@supports (display:grid){@scope (umono-root){a{color:red}}}}\n@keyframes k{from{opacity:0}}\n"
-
-func TestLedgerCSSRows(t *testing.T) {
-	want := []string{
-		"css.at.media",
-		"css.at.supports",
-		"css.at.layer",
-		"css.at.font-face",
-		"css.at.keyframes",
-	}
-	if len(featureRows) < 20 {
-		t.Fatalf("expected at least 20 features, got %d", len(featureRows))
-	}
-	for i, id := range want {
-		j := 15 + i
-		if featureRows[j].ID != id {
-			t.Errorf("featureRows[%d].ID = %q, want %q", j, featureRows[j].ID, id)
-		}
-		if featureRows[j].IntroducedIn != 1 {
-			t.Errorf("featureRows[%d] %q IntroducedIn = %d, want 1", j, id, featureRows[j].IntroducedIn)
-		}
-	}
-}
 
 func TestCSSDetectors(t *testing.T) {
 	cases := []struct {

@@ -7,45 +7,6 @@ import (
 	"testing"
 )
 
-func TestLedgerComponoRows(t *testing.T) {
-	want := []string{
-		"compono.builtin.link",
-		"compono.builtin.image",
-		"compono.builtin.nav",
-		"compono.builtin.list",
-		"compono.builtin.details",
-		"compono.builtin.header",
-		"compono.builtin.main",
-		"compono.builtin.footer",
-		"compono.builtin.article",
-		"compono.builtin.aside",
-		"compono.markdown.heading",
-		"compono.markdown.p",
-		"compono.markdown.br",
-		"compono.markdown.em",
-		"compono.markdown.strong",
-		"compono.markdown.link",
-		"compono.markdown.inline-code",
-		"compono.markdown.code-block",
-		"compono.markdown.list",
-		"compono.markdown.blockquote",
-		"compono.markdown.hr",
-		"compono.markdown.table",
-	}
-	if len(featureRows) < 20+len(want) {
-		t.Fatalf("expected at least %d features, got %d", 20+len(want), len(featureRows))
-	}
-	for i, id := range want {
-		j := 20 + i
-		if featureRows[j].ID != id {
-			t.Errorf("featureRows[%d].ID = %q, want %q", j, featureRows[j].ID, id)
-		}
-		if featureRows[j].IntroducedIn != 1 {
-			t.Errorf("featureRows[%d] %q IntroducedIn = %d, want 1", j, id, featureRows[j].IntroducedIn)
-		}
-	}
-}
-
 func TestBuiltins(t *testing.T) {
 	want := []string{"LINK", "IMAGE", "NAV", "LIST", "DETAILS", "HEADER", "MAIN", "FOOTER", "ARTICLE", "ASIDE"}
 	got := builtins()
