@@ -6,12 +6,6 @@ import (
 	"testing"
 )
 
-func TestFallbackCSSVerifies(t *testing.T) {
-	if err := verify(FallbackCSS()); err != nil {
-		t.Fatalf("verify(FallbackCSS()) = %v, want nil", err)
-	}
-}
-
 func TestFallbackSourceTransforms(t *testing.T) {
 	out, err := transform(FallbackSource())
 	if err != nil {
@@ -20,9 +14,12 @@ func TestFallbackSourceTransforms(t *testing.T) {
 	if !bytes.Equal(out, FallbackCSS()) {
 		t.Fatalf("transform(FallbackSource()) = %q, want %q", out, FallbackCSS())
 	}
+	if err := verify(FallbackCSS()); err != nil {
+		t.Fatalf("verify(FallbackCSS()) = %v, want nil", err)
+	}
 }
 
-func TestFallbackHasNoAssets(t *testing.T) {
+func TestFallbackSourceText(t *testing.T) {
 	src := string(FallbackSource())
 	if strings.Contains(src, "url(") {
 		t.Errorf("FallbackSource() contains %q", "url(")
@@ -30,10 +27,6 @@ func TestFallbackHasNoAssets(t *testing.T) {
 	if strings.Contains(src, "Inter") {
 		t.Errorf("FallbackSource() contains %q", "Inter")
 	}
-}
-
-func TestFallbackRoot(t *testing.T) {
-	src := string(FallbackSource())
 	want := []string{
 		":scope {",
 		"background-color: #F4F1EA;",
