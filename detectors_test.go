@@ -207,29 +207,6 @@ func TestDetectors(t *testing.T) {
 			where: "",
 			found: false,
 		},
-	}
-	for _, c := range cases {
-		c := c
-		t.Run(c.name, func(t *testing.T) {
-			f := feature(t, c.id)
-			where, found := f.Detect(Package{Files: c.files})
-			if where != c.where || found != c.found {
-				t.Errorf("Detect(%s) = (%q, %v), want (%q, %v)", c.id, where, found, c.where, c.found)
-			}
-		})
-	}
-}
-
-const canonicalCSS = "@font-face{font-family:x}\n@layer a,b;\n@media print{@supports (display:grid){@scope (umono-root){a{color:red}}}}\n@keyframes k{from{opacity:0}}\n"
-
-func TestCSSDetectors(t *testing.T) {
-	cases := []struct {
-		name  string
-		id    string
-		files map[string][]byte
-		where string
-		found bool
-	}{
 		{
 			name:  "media",
 			id:    "css.at.media",
@@ -295,7 +272,6 @@ func TestCSSDetectors(t *testing.T) {
 		},
 	}
 	for _, c := range cases {
-		c := c
 		t.Run(c.name, func(t *testing.T) {
 			f := feature(t, c.id)
 			where, found := f.Detect(Package{Files: c.files})
@@ -305,6 +281,8 @@ func TestCSSDetectors(t *testing.T) {
 		})
 	}
 }
+
+const canonicalCSS = "@font-face{font-family:x}\n@layer a,b;\n@media print{@supports (display:grid){@scope (umono-root){a{color:red}}}}\n@keyframes k{from{opacity:0}}\n"
 
 func TestDetectFeatureFloorUnreadableCSS(t *testing.T) {
 	_, _, err := detectFeatureFloor(Package{Files: map[string][]byte{"assets/theme.css": []byte("a{")}})
