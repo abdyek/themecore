@@ -11,16 +11,9 @@ func ptr(s string) *string {
 	return &s
 }
 
-func manifestDoc(set map[string]string, extra string) string {
-	base := []struct {
-		key, value string
-	}{
-		{"schema", `"https://umono.dev/schemas/theme-manifest/v1"`},
-		{"id", `"acme/minimal"`},
-		{"contract", `"umono/e-commerce@v1.0"`},
-		{"name", `"Minimal E-commerce"`},
-		{"version", `"0.1.0"`},
-	}
+type docKey struct{ key, value string }
+
+func tomlDoc(base []docKey, set map[string]string, extra string) string {
 	baseKeys := make(map[string]struct{}, len(base))
 	for _, b := range base {
 		baseKeys[b.key] = struct{}{}
@@ -64,6 +57,17 @@ func manifestDoc(set map[string]string, extra string) string {
 
 	sb.WriteString(extra)
 	return sb.String()
+}
+
+func manifestDoc(set map[string]string, extra string) string {
+	base := []docKey{
+		{"schema", `"https://umono.dev/schemas/theme-manifest/v1"`},
+		{"id", `"acme/minimal"`},
+		{"contract", `"umono/e-commerce@v1.0"`},
+		{"name", `"Minimal E-commerce"`},
+		{"version", `"0.1.0"`},
+	}
+	return tomlDoc(base, set, extra)
 }
 
 func TestParseManifest(t *testing.T) {
