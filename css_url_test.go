@@ -68,22 +68,21 @@ func TestURLsRejected(t *testing.T) {
 }
 
 func TestURLsInvalidForm(t *testing.T) {
-	sheets := []string{
-		`a{background:url(var(--x))}`,
-		`a{background:src(var(--x))}`,
+	cases := []struct {
+		css  string
+		want string
+	}{
+		{`a{background:url(var(--x))}`, "bad url"},
+		{`a{background:src(var(--x))}`, "invalid url()"},
 	}
-	wants := []string{
-		"bad url",
-		"invalid url()",
-	}
-	for i, css := range sheets {
+	for i, c := range cases {
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
-			_, err := transform([]byte(css))
+			_, err := transform([]byte(c.css))
 			if err == nil {
 				t.Fatalf("expected error, got nil")
 			}
-			if !strings.Contains(err.Error(), wants[i]) {
-				t.Fatalf("error %q does not contain %q", err.Error(), wants[i])
+			if !strings.Contains(err.Error(), c.want) {
+				t.Fatalf("error %q does not contain %q", err.Error(), c.want)
 			}
 		})
 	}
