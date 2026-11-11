@@ -7,27 +7,34 @@ import (
 	"testing"
 )
 
-func TestBuiltins(t *testing.T) {
-	want := []string{"LINK", "IMAGE", "NAV", "LIST", "DETAILS", "HEADER", "MAIN", "FOOTER", "ARTICLE", "ASIDE"}
-	got := builtins()
-	if !reflect.DeepEqual(got, want) {
-		t.Fatalf("builtins() = %v, want %v", got, want)
+func TestComponoLists(t *testing.T) {
+	cases := []struct {
+		name string
+		list func() []string
+		want []string
+	}{
+		{
+			name: "builtins",
+			list: builtins,
+			want: []string{"LINK", "IMAGE", "NAV", "LIST", "DETAILS", "HEADER", "MAIN", "FOOTER", "ARTICLE", "ASIDE"},
+		},
+		{
+			name: "markdown elements",
+			list: markdownElements,
+			want: []string{"heading", "p", "br", "em", "strong", "link", "inline-code", "code-block", "list", "blockquote", "hr", "table"},
+		},
 	}
-	got[0] = "CHANGED"
-	if again := builtins(); !reflect.DeepEqual(again, want) {
-		t.Errorf("builtins() after change = %v, want %v", again, want)
-	}
-}
-
-func TestMarkdownElements(t *testing.T) {
-	want := []string{"heading", "p", "br", "em", "strong", "link", "inline-code", "code-block", "list", "blockquote", "hr", "table"}
-	got := markdownElements()
-	if !reflect.DeepEqual(got, want) {
-		t.Fatalf("markdownElements() = %v, want %v", got, want)
-	}
-	got[0] = "changed"
-	if again := markdownElements(); !reflect.DeepEqual(again, want) {
-		t.Errorf("markdownElements() after change = %v, want %v", again, want)
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			got := c.list()
+			if !reflect.DeepEqual(got, c.want) {
+				t.Fatalf("%s() = %v, want %v", c.name, got, c.want)
+			}
+			got[0] = "changed"
+			if again := c.list(); !reflect.DeepEqual(again, c.want) {
+				t.Errorf("%s() after change = %v, want %v", c.name, again, c.want)
+			}
+		})
 	}
 }
 
