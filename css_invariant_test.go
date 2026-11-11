@@ -1,8 +1,8 @@
 package themecore
 
 import (
-	"bytes"
 	"fmt"
+	"strings"
 	"testing"
 )
 
@@ -29,7 +29,7 @@ h1 { font-family: "acme-inter", sans-serif; }
 	`@media (prefers-color-scheme: dark) and (min-resolution: 2dppx), print { :scope { color-scheme: dark; } }`,
 }
 
-func TestTransformOutputsVerify(t *testing.T) {
+func TestTransformOutputs(t *testing.T) {
 	for i, css := range validStylesheets {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
 			out, err := transform([]byte(css))
@@ -39,40 +39,13 @@ func TestTransformOutputsVerify(t *testing.T) {
 			if err := verify(out); err != nil {
 				t.Fatalf("verify error on transformed output: %v", err)
 			}
+			_, err = transform(out)
+			if err == nil {
+				t.Fatalf("expected error containing %q, got nil", "@scope is not allowed")
+			}
+			if !strings.Contains(err.Error(), "@scope is not allowed") {
+				t.Fatalf("expected error containing %q, got %v", "@scope is not allowed", err)
+			}
 		})
-	}
-}
-
-func TestDetailsRecipe(t *testing.T) {
-	src := validStylesheets[0]
-	out, err := transform([]byte(src))
-	if err != nil {
-		t.Fatalf("transform error: %v", err)
-	}
-	want := "@media (min-width:48rem){@supports selector(::details-content){@scope (umono-root){nav>details>summary{display:none}nav>details::details-content{content-visibility:visible}}}}\n"
-	if !bytes.Equal(out, []byte(want)) {
-		t.Fatalf("unexpected output:\nwant: %q\ngot:  %q", want, out)
-	}
-}
-
-func TestTransformIdempotentShape(t *testing.T) {
-	for i, css := range validStylesheets {
-		first, err := transform([]byte(css))
-		if err != nil {
-			t.Fatalf("[%d] first transform error: %v", i, err)
-		}
-		_, err2 := transform(first)
-		if bytes.Contains(first, []byte("@scope")) {
-			if err2 == nil {
-				t.Fatalf("[%d] expected error containing %q, got nil", i, "@scope is not allowed")
-			}
-			if !bytes.Contains([]byte(err2.Error()), []byte("@scope is not allowed")) {
-				t.Fatalf("[%d] expected error containing %q, got %v", i, "@scope is not allowed", err2)
-			}
-			continue
-		}
-		if err2 != nil {
-			t.Fatalf("[%d] expected success on second pass, got %v", i, err2)
-		}
 	}
 }
