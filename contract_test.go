@@ -3,68 +3,22 @@ package themecore
 import (
 	"errors"
 	"reflect"
-	"sort"
 	"strings"
 	"testing"
 )
 
 func contractDoc(head map[string]string, tables string) string {
-	base := []struct {
-		key, value string
-	}{
+	base := []docKey{
 		{"schema", `"https://umono.dev/schemas/theme-contract/v1"`},
 		{"id", `"example/blog"`},
 		{"version", `"v0.1"`},
 	}
-	baseKeys := make(map[string]struct{}, len(base))
-	for _, b := range base {
-		baseKeys[b.key] = struct{}{}
-	}
-
-	var sb strings.Builder
-	for _, b := range base {
-		if v, ok := head[b.key]; ok {
-			if v == "-" {
-				continue
-			}
-			sb.WriteString(b.key)
-			sb.WriteString(" = ")
-			sb.WriteString(v)
-			sb.WriteByte('\n')
-		} else {
-			sb.WriteString(b.key)
-			sb.WriteString(" = ")
-			sb.WriteString(b.value)
-			sb.WriteByte('\n')
-		}
-	}
-
-	var extras []string
-	for k := range head {
-		if _, ok := baseKeys[k]; !ok {
-			extras = append(extras, k)
-		}
-	}
-	sort.Strings(extras)
-	for _, k := range extras {
-		v := head[k]
-		if v == "-" {
-			continue
-		}
-		sb.WriteString(k)
-		sb.WriteString(" = ")
-		sb.WriteString(v)
-		sb.WriteByte('\n')
-	}
-
 	if tables == "" {
 		tables = `[[layouts]]
 id = "post"
 source = "# {{ title }}"`
 	}
-	sb.WriteByte('\n')
-	sb.WriteString(tables)
-	return sb.String()
+	return tomlDoc(base, head, "\n"+tables)
 }
 
 func layoutTable(lines ...string) string {
@@ -75,8 +29,15 @@ func componentTable(lines ...string) string {
 	return "[[components]]\n" + strings.Join(lines, "\n")
 }
 
-func TestParseContractExample(t *testing.T) {
-	doc := `schema = "https://umono.dev/schemas/theme-contract/v1"
+func TestParseContract(t *testing.T) {
+	cases := []struct {
+		name string
+		doc  string
+		want Contract
+	}{
+		{
+			name: "example",
+			doc: `schema = "https://umono.dev/schemas/theme-contract/v1"
 id = "example/blog"
 version = "v0.1"
 
@@ -96,50 +57,69 @@ source = '''
 ~ body = NO_MATTER
 {{ body }}
 '''
-`
-	c, err := ParseContract([]byte(doc))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	want := Contract{
-		Schema:      "https://umono.dev/schemas/theme-contract/v1",
-		ID:          "example/blog",
-		Version:     "v0.1",
-		Description: nil,
-		Layouts: []Layout{
-			{
-				ID:          "post",
-				Description: ptr("A single blog post"),
-				Source:      "~ title = \"\" body = NO_MATTER\n# {{ title }}\n{{ POST_BODY body = body }}\n",
+`,
+			want: Contract{
+				Schema:      "https://umono.dev/schemas/theme-contract/v1",
+				ID:          "example/blog",
+				Version:     "v0.1",
+				Description: nil,
+				Layouts: []Layout{
+					{
+						ID:          "post",
+						Description: ptr("A single blog post"),
+						Source:      "~ title = \"\" body = NO_MATTER\n# {{ title }}\n{{ POST_BODY body = body }}\n",
+					},
+				},
+				Components: []Component{
+					{
+						Name:   "POST_BODY",
+						Source: "~ body = NO_MATTER\n{{ body }}\n",
+						Expose: true,
+					},
+				},
 			},
 		},
-		Components: []Component{
-			{
-				Name:   "POST_BODY",
-				Source: "~ body = NO_MATTER\n{{ body }}\n",
-				Expose: true,
+		{
+			name: "minimal",
+			doc:  contractDoc(nil, ""),
+			want: Contract{
+				Schema:  "https://umono.dev/schemas/theme-contract/v1",
+				ID:      "example/blog",
+				Version: "v0.1",
+				Layouts: []Layout{
+					{
+						ID:     "post",
+						Source: "# {{ title }}",
+					},
+				},
+			},
+		},
+		{
+			name: "source whitespace",
+			doc:  contractDoc(nil, layoutTable(`id = "post"`, `source = "a\r\n\tb\n"`)),
+			want: Contract{
+				Schema:  "https://umono.dev/schemas/theme-contract/v1",
+				ID:      "example/blog",
+				Version: "v0.1",
+				Layouts: []Layout{
+					{
+						ID:     "post",
+						Source: "a\r\n\tb\n",
+					},
+				},
 			},
 		},
 	}
-	if !reflect.DeepEqual(c, want) {
-		t.Fatalf("contract mismatch:\n got: %#v\nwant: %#v", c, want)
-	}
-}
-
-func TestParseContractMinimal(t *testing.T) {
-	doc := contractDoc(nil, "")
-	c, err := ParseContract([]byte(doc))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if c.Components != nil {
-		t.Errorf("Components: got %v, want nil", c.Components)
-	}
-	if len(c.Layouts) != 1 {
-		t.Fatalf("Layouts: got %d layouts, want 1", len(c.Layouts))
-	}
-	if c.Layouts[0].ID != "post" {
-		t.Errorf("Layouts[0].ID: got %q, want %q", c.Layouts[0].ID, "post")
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			c, err := ParseContract([]byte(tc.doc))
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if !reflect.DeepEqual(c, tc.want) {
+				t.Fatalf("contract mismatch:\n got: %#v\nwant: %#v", c, tc.want)
+			}
+		})
 	}
 }
 
@@ -189,23 +169,9 @@ func TestParseContractRejects(t *testing.T) {
 	}
 }
 
-func TestParseContractSourceWhitespace(t *testing.T) {
-	doc := contractDoc(nil, layoutTable(`id = "post"`, `source = "a\r\n\tb\n"`))
-	c, err := ParseContract([]byte(doc))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if len(c.Layouts) != 1 {
-		t.Fatalf("Layouts: got %d layouts, want 1", len(c.Layouts))
-	}
-	want := "a\r\n\tb\n"
-	if c.Layouts[0].Source != want {
-		t.Errorf("Layouts[0].Source: got %q, want %q", c.Layouts[0].Source, want)
-	}
-}
-
-func TestParseContractRejectsSourceSyntaxErrors(t *testing.T) {
+func TestParseContractRejectsOutdated(t *testing.T) {
 	post := "id = " + string(rune(34)) + "post" + string(rune(34))
+	compA := "name = " + string(rune(34)) + "A" + string(rune(34))
 	cases := []struct {
 		name   string
 		tables string
@@ -231,38 +197,6 @@ func TestParseContractRejectsSourceSyntaxErrors(t *testing.T) {
 			tables: layoutTable(post, `source = 'x'`) + "\n\n" + componentTable(`name = "A"`, "source = '''\n~ y\n{{ y }}\n'''"),
 			want:   "contract.toml: components[0].source: 1:3: invalid-parameter-definition",
 		},
-	}
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			_, err := ParseContract([]byte(contractDoc(nil, tc.tables)))
-			if err == nil {
-				t.Fatalf("expected error, got nil")
-			}
-			if !strings.Contains(err.Error(), tc.want) {
-				t.Errorf("error %q does not contain %q", err.Error(), tc.want)
-			}
-			if !errors.Is(err, ErrOutdated) {
-				t.Errorf("error %q does not wrap ErrOutdated", err.Error())
-			}
-		})
-	}
-}
-
-func TestParseContractAcceptsValueDependentErrors(t *testing.T) {
-	tables := layoutTable("id = "+string(rune(34))+"post"+string(rune(34)), "source = '''\n{{ title }}\n{{ GLOBAL_OR_COMPONENT }}\n'''") + "\n\n" + componentTable("name = "+string(rune(34))+"GLOBAL_OR_COMPONENT"+string(rune(34)), `source = 'x'`)
-	if _, err := ParseContract([]byte(contractDoc(nil, tables))); err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-}
-
-func TestParseContractRejectsUndefinedCalls(t *testing.T) {
-	post := "id = " + string(rune(34)) + "post" + string(rune(34))
-	compA := "name = " + string(rune(34)) + "A" + string(rune(34))
-	cases := []struct {
-		name   string
-		tables string
-		want   string
-	}{
 		{
 			name:   "undefined call in layout",
 			tables: layoutTable(post, `source = '{{ NOPE }}'`),
@@ -300,12 +234,29 @@ func TestParseContractRejectsUndefinedCalls(t *testing.T) {
 	}
 }
 
-func TestParseContractAcceptsDefinedCalls(t *testing.T) {
+func TestParseContractAccepts(t *testing.T) {
 	post := "id = " + string(rune(34)) + "post" + string(rune(34))
 	compA := "name = " + string(rune(34)) + "A" + string(rune(34))
-	tables := layoutTable(post, "source = '''\n~ c = NOPE\n{{ c }}\n{{ MAIN content = A }}\n{{ L }}\n\n~ L\nl\n'''") +
-		"\n\n" + componentTable(compA, `source = '{{ A }}'`)
-	if _, err := ParseContract([]byte(contractDoc(nil, tables))); err != nil {
-		t.Fatalf("unexpected error: %v", err)
+	cases := []struct {
+		name   string
+		tables string
+	}{
+		{
+			name: "value-dependent errors",
+			tables: layoutTable(post, "source = '''\n{{ title }}\n{{ GLOBAL_OR_COMPONENT }}\n'''") + "\n\n" +
+				componentTable("name = "+string(rune(34))+"GLOBAL_OR_COMPONENT"+string(rune(34)), `source = 'x'`),
+		},
+		{
+			name: "defined calls",
+			tables: layoutTable(post, "source = '''\n~ c = NOPE\n{{ c }}\n{{ MAIN content = A }}\n{{ L }}\n\n~ L\nl\n'''") +
+				"\n\n" + componentTable(compA, `source = '{{ A }}'`),
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			if _, err := ParseContract([]byte(contractDoc(nil, tc.tables))); err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+		})
 	}
 }

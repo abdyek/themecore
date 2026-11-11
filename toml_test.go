@@ -6,111 +6,63 @@ import (
 	"testing"
 )
 
-func TestDecodeTOMLAcceptsTOML10(t *testing.T) {
-	doc := "a = \"x\"\nb = 1\n\n[c]\nd = true\n"
-	var got map[string]any
-	if err := decodeTOML([]byte(doc), &got); err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	want := map[string]any{
-		"a": "x",
-		"b": int64(1),
-		"c": map[string]any{"d": true},
-	}
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("got %#v, want %#v", got, want)
-	}
-}
-
-func TestDecodeTOMLRejectsTOML11(t *testing.T) {
+func TestDecodeTOMLRejects(t *testing.T) {
 	cases := []struct {
 		name string
 		doc  string
+		v    any
+		want string
 	}{
 		{
-			name: "newline in inline table",
-			doc:  "a = {\nb = 1\n}\n",
-		},
-		{
-			name: "trailing comma in inline table",
+			name: "TOML v1.1.0 syntax",
 			doc:  "a = { b = 1, }\n",
+			v:    new(map[string]any),
+			want: "",
 		},
 		{
-			name: "escape e",
-			doc:  `a = "\e"` + "\n",
+			name: "unknown key",
+			doc:  "a = 1\nb = 2\n",
+			v: &struct {
+				A int64 `toml:"a"`
+			}{},
+			want: "unknown key b",
 		},
 		{
-			name: "escape x",
-			doc:  `a = "\x41"` + "\n",
-		},
-		{
-			name: "local time without seconds",
-			doc:  "a = 07:32\n",
-		},
-		{
-			name: "offset date-time without seconds",
-			doc:  "a = 1979-05-27T07:32Z\n",
+			name: "invalid UTF-8",
+			doc:  "a = \"\xff\"\n",
+			v:    new(map[string]any),
+			want: "",
 		},
 	}
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			var got map[string]any
-			if err := decodeTOML([]byte(tc.doc), &got); err == nil {
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			err := decodeTOML([]byte(c.doc), c.v)
+			if err == nil {
 				t.Fatalf("expected error, got nil")
+			}
+			if c.want != "" && !strings.Contains(err.Error(), c.want) {
+				t.Errorf("error %q does not contain %q", err, c.want)
 			}
 		})
 	}
 }
 
-func TestDecodeTOMLRejectsUnknownKeys(t *testing.T) {
-	doc := "a = 1\nb = 2\n"
-	var got struct {
-		A int64 `toml:"a"`
-	}
-	if err := decodeTOML([]byte(doc), &got); err == nil {
-		t.Fatalf("expected error, got nil")
-	}
-}
-
-func TestDecodeTOMLRejectsInvalidUTF8(t *testing.T) {
-	input := []byte("a = \"\xff\"\n")
-	var got map[string]any
-	if err := decodeTOML(input, &got); err == nil {
-		t.Fatalf("expected error, got nil")
-	}
-}
-
-func TestDecodeTOMLRejectsEscapeE(t *testing.T) {
-	cases := []struct {
-		name string
-		doc  string
-	}{
-		{
-			name: "multiline basic string",
-			doc:  `a = """` + "\n" + `x\ey` + "\n" + `"""` + "\n",
-		},
-		{
-			name: "quoted key",
-			doc:  `"a\eb" = 1` + "\n",
-		},
-	}
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			var got map[string]any
-			if err := decodeTOML([]byte(tc.doc), &got); err == nil {
-				t.Fatalf("expected error, got nil")
-			}
-		})
-	}
-}
-
-func TestDecodeTOMLAcceptsBackslashE(t *testing.T) {
+func TestDecodeTOMLAccepts(t *testing.T) {
 	const backslash = "\\"
 	cases := []struct {
 		name string
 		doc  string
 		want map[string]any
 	}{
+		{
+			name: "TOML v1.0.0",
+			doc:  "a = \"x\"\nb = 1\n\n[c]\nd = true\n",
+			want: map[string]any{
+				"a": "x",
+				"b": int64(1),
+				"c": map[string]any{"d": true},
+			},
+		},
 		{
 			name: "literal string",
 			doc:  `a = 'C:\e'` + "\n",
@@ -172,6 +124,9 @@ func TestCheckTOMLSyntaxRejectsTOML11(t *testing.T) {
 		{"local date-time without seconds", "a = 1979-05-27T07:32\n"},
 		{"offset date-time without seconds", "a = 1979-05-27 07:32Z\n"},
 		{"time without seconds in array", "a = [07:32]\n"},
+		{"offset date-time with T without seconds", "a = 1979-05-27T07:32Z\n"},
+		{"escape e in multi-line string", "a = \"\"\"\nxBSey\n\"\"\"\n"},
+		{"escape e in quoted key", "\"aBSeb\" = 1\n"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
