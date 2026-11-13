@@ -28,7 +28,7 @@ The checks of a theme run from one place, in a fixed order, through three entry 
 
   The package limits and content, `built.toml`, `contract.toml`, `LICENSE` and the feature floor are fatal: the theme is not activated. Errors of `theme.css`, `attributes.toml` and single assets are returned one by one, so dev mode goes on: the `theme.css` request fails, pages render without attribute injection, and a broken asset is not served. The result also holds the validated `built.toml` and the unchanged bytes of `contract.toml`, so Umono never reads those files itself.
 
-Checks that need a database or the network, such as comparing the contract with umono.dev, belong to the Umono runtime and are not in `themecore`.
+Checks that need a database or the network, such as downloading the [signature of the contract](#contract-signatures), belong to the Umono runtime and are not in `themecore`.
 
 ## File Format
 
@@ -116,6 +116,29 @@ An installed package sits at `themes/{org}/{id}/{version}`, which must match its
 | `components` | No | `[[components]]` with a unique `SCREAMING_SNAKE_CASE` `name`, a non-empty `source` and an optional boolean `expose` |
 
 A source with a grammar error that does not depend on values (`invalid-expression`, `unclosed-expression` or `invalid-parameter-definition`), also in a local that is never called, cannot be parsed and is rejected. So is a call or a value that resolves to nothing: not to a local of its source, a component of the contract or a built-in open to themes. A default (`content = NO_MATTER`) only names the type of a parameter and is not checked. A published contract has neither, so the error means that the program is older than the contract. The error wraps `ErrOutdated`, so CLI and Umono can report that they are out of date instead of showing the raw error.
+
+## Contract Signatures
+
+Every published contract is signed with [minisign](https://jedisct1.github.io/minisign/). The signature is a separate file next to the contract in the registry, at the URL of the contract with `.minisig` appended, for example `https://umono.dev/registry/v1/contracts/umono/page/v0.1.minisig`. It is not part of the package: the caller downloads it, reads at most 4 KiB of the response, and gives `VerifyContractSignature` the bytes of the package's `contract.toml`, the bytes of the signature and the reference the package declares. The function does not touch the network, the file system or the clock.
+
+The public key is embedded in `themecore` and cannot be replaced by the caller. It is the second line of `umono.pub`:
+
+```
+untrusted comment: minisign public key FF93F835DAA967E3
+RWTjZ6naNfiT/6JEdZFEcmm1K2n/xSsuLy9zcIaZ37Rxo2XVh1R3vs1d
+```
+
+A signature is accepted only when all of these hold:
+
+1. The file has four lines separated by `\n`; a final newline is optional. Line 1 starts with `untrusted comment: `, and the rest of it is ignored. Line 3 starts with `trusted comment: `.
+2. Line 2 is base64 of 74 bytes: the algorithm (2), the key id (8) and the signature (64).
+3. The algorithm is `ED`, the signature of the BLAKE2b-512 hash of the file. This is the default of minisign 0.10 and later. `Ed`, the legacy format that signs the file itself, is rejected.
+4. The key id is that of the embedded key.
+5. The signature verifies with Ed25519 over the BLAKE2b-512 hash of `contract.toml`.
+6. Line 4 is base64 of 64 bytes, the global signature. It verifies over the signature of line 2 followed by the text of the trusted comment.
+7. The trusted comment is exactly `contract ` followed by the reference, for example `contract umono/page@v0.1`, so a signed contract cannot be served under the path of another contract.
+
+Every error wraps `ErrContractSignature`. The text names the step that failed, for tests and logs. The site owner gets one answer for all of them: the contract in the package is not the published contract. Failing to download the signature is the caller's error and never reaches this function.
 
 ## `attributes.toml`
 
